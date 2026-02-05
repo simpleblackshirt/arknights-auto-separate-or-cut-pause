@@ -12,8 +12,17 @@ import webbrowser
 import math
 import datetime
 import threading
+import logging
 
-#global variable
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(message)s',
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
+
+# Global variable
 path = os.getcwd()
 working_path = path + "\\working_folder\\"
 bin_path = path + "\\bin\\"
@@ -22,7 +31,7 @@ os.environ['PATH'] = bin_path + os.pathsep + os.environ.get('PATH','')
 array_1 = []
 array_2 = []
 
-#constants
+# Constants
 
 TEMP_FILENAME = "temp_list.txt"
 TEMP_PREFIX = "out_"
@@ -30,6 +39,7 @@ FOURCC = cv2.VideoWriter_fourcc("m", "p", "4", "v")
 DEFAULT_THREAD_NUM = 4
 DEFAULT_IGNORE_FRAME_CNT = 0
 SHOW_PROGRESS_SEG = 5
+DEFAULT_LANGUAGE = "en"  # Default language: "cn" for Chinese, "en" for English
 
 P_M_Y_CO = 0.074             #(right top) pause middle coefficient
 P_M_X_CO = 0.112
@@ -52,7 +62,7 @@ VP_X_2_CO = 0.093
 VP_X_3_CO = 0.139
 VP_X_4_CO = 0.185
 
-#disable following as new UI always work with first way of checking
+# Disabled following as new UI always works with first way of checking
 #VP_2_Y_CO = 0.389   #second option to check valid pause
 #VP_2_X_1_CO = 0.188 #wendi
 #VP_2_X_2_CO = 0.197 #niaolong(mozu)
@@ -82,7 +92,83 @@ LIGHT_GRAY_UPPER_PERC = 0.25
 
 
 MARGIN_TH = 500
-    
+
+# Import i18n module
+from i18n import (
+    t, get_current_language, set_language,
+    register_language_change_callback, update_combobox_preserve_selection
+)
+
+# Initialize default language before creating any GUI elements
+set_language(DEFAULT_LANGUAGE, notify=False)
+
+# Global language variable (for backward compatibility)
+current_language = get_current_language()
+
+def change_language(event=None):
+    """Handle language change"""
+    global current_language
+    idx = e_language.current()
+    new_language = "cn" if idx == 0 else "en"
+    set_language(new_language)
+    current_language = get_current_language()
+    # Callback is automatically triggered by set_language()
+
+def update_all_text():
+    """Update all GUI text elements based on current language"""
+    win.title(t("window_title"))
+    l_text_working_path.config(text=t("current_working_dir"))
+    l_mode.config(text=t("select_mode"))
+    # Only update b_show_desc if it still exists (not destroyed by show_desc)
+    try:
+        b_show_desc.config(text=t("show_desc"))
+    except:
+        pass
+    l_top_margin.config(text=t("top_margin"))
+    l_bottom_margin.config(text=t("bottom_margin"))
+    l_left_margin.config(text=t("left_margin"))
+    l_right_margin.config(text=t("right_margin"))
+    l_thread_num.config(text=t("thread_num"))
+    l_ignore_frame_cnt.config(text=t("ignore_frame_cnt"))
+    b_save_settings.config(text=t("save_settings"))
+    l_measure_margin_second.config(text=t("measure_margin_second"))
+    b_measure_margin.config(text=t("measure_margin"))
+    b_crop.config(text=t("crop_btn"))
+    b_cut_without_crop.config(text=t("start_without_crop"))
+    b_cut_with_crop.config(text=t("start_with_crop"))
+    l_tutorial.config(text=t("tutorial"))
+    l_start_second.config(text=t("start_second"))
+    l_end_second.config(text=t("end_second"))
+    l_manual_set_second.config(text=t("manual_set_second"))
+    b_manual_set.config(text=t("manual_set"))
+    b_manual_set_sample.config(text=t("sample_images"))
+    b_manual_set_save.config(text=t("save_detection_points"))
+    l_frame_desc.config(text=t("refer_sample"))
+    l_frame_1_desc.config(text=t("frame_1_desc"))
+    l_frame_2_desc.config(text=t("frame_2_desc"))
+    l_manual_set_or_not.config(text=t("manual_set_or_not"))
+    l_language.config(text=t("language"))
+    # Update combobox values using helper function
+    update_combobox_preserve_selection(
+        e_mode,
+        "mode_normal_audio_only", "mode_normal_keep_video",
+        "mode_lazy_keep_valid", "mode_lazy_cut_all"
+    )
+    update_combobox_preserve_selection(
+        e_manual_set_or_not,
+        "no", "yes"
+    )
+    # Update description labels if they exist
+    try:
+        l3.config(text=t("lazy_mode_desc1") + "\n" + t("lazy_mode_desc2"), font=20, height=3, width=30)
+        l3_2.config(text=t("lazy_mode_desc3"), font=20, width=30)
+        l3_3.config(text=t("lazy_mode_desc3"), font=20)
+        l4.config(text=t("normal_mode_desc1") + "\n" + t("normal_mode_desc2"), font=20, height=3, width=30)
+        l4_2.config(text=t("normal_mode_desc3"), font=20, width=30)
+        l4_3.config(text=t("normal_mode_desc3"), font=20)
+    except:
+        pass
+
 def check_margin(top_margin, bottom_margin, left_margin, right_margin):
     if not (
         top_margin.replace("-", "").isdigit()
@@ -90,7 +176,7 @@ def check_margin(top_margin, bottom_margin, left_margin, right_margin):
         and left_margin.replace("-", "").isdigit()
         and right_margin.replace("-", "").isdigit()
     ):
-        messagebox.showerror(title="出错了！", message="边距参数有误（需整数）")
+        messagebox.showerror(title=t("error_title"), message=t("margin_param_error"))
         return False
     if (
         int(top_margin) > MARGIN_TH
@@ -98,7 +184,7 @@ def check_margin(top_margin, bottom_margin, left_margin, right_margin):
         or int(left_margin) > MARGIN_TH
         or int(right_margin) > MARGIN_TH
     ):
-        messagebox.showerror(title="出错了！", message="边距像素数过大，请重新设置")
+        messagebox.showerror(title=t("error_title"), message=t("margin_too_large"))
         return False
     return True
 
@@ -109,22 +195,22 @@ def check_crop(top_margin, bottom_margin, left_margin, right_margin, video_name)
         or int(left_margin) < 0
         or int(right_margin) < 0
     ):
-        messagebox.showerror(title="出错了！", message="不能裁剪负数边距（剪暂停不影响）")
+        messagebox.showerror(title=t("error_title"), message=t("negative_margin_error"))
         return False
     if video_name == "aftercrop.mp4":
-        messagebox.showerror(title="出错了！", message="裁剪文件名不能为aftercrop.mp4")
+        messagebox.showerror(title=t("error_title"), message=t("aftercrop_name_error"))
         return False
     if os.path.exists(path + "/" + video_name):
-        messagebox.showerror(title="出错了！", message="上级目录已存在同文件名，请重命名")
+        messagebox.showerror(title=t("error_title"), message=t("duplicate_file_error"))
         return False
     return True
 
 def check_start_end_seconds(start_second, end_second):
     if not (start_second.isdigit() and end_second.isdigit()):
-        messagebox.showerror(title="出错了！", message="开始结束秒数有误（需正整数）")
+        messagebox.showerror(title=t("error_title"), message=t("start_end_param_error"))
         return False
     if int(start_second) >= int(end_second):
-        messagebox.showerror(title="出错了！", message="结束秒数必须大于开始秒数")
+        messagebox.showerror(title=t("error_title"), message=t("end_must_be_greater"))
         return False
     return True
 
@@ -135,45 +221,45 @@ def check_file_and_return_path():
         file_cnt += 1
     if file_cnt == 1:
         if working_folder_list[0].startswith("out"):
-            messagebox.showerror(title="出错了！", message="文件名不得以out开头，请重命名")
+            messagebox.showerror(title=t("error_title"), message=t("no_out_prefix"))
             return False
         return working_path + working_folder_list[0]
-    messagebox.showerror(title="出错了！", message="工作目录下文件数必须为1")
+    messagebox.showerror(title=t("error_title"), message=t("single_file_required"))
     return False
 
 def check_measure_margin_second(measure_margin_second):
     if not measure_margin_second.replace(".", "", 1).isdigit():
-        messagebox.showerror(title="出错了！", message="检测边距秒数有误（需大于0的数字，接受小数）")
+        messagebox.showerror(title=t("error_title"), message=t("measure_margin_error"))
         return False
     return True
-    
+
 def check_set_second(set_second):
     if not set_second.replace(".", "", 1).isdigit():
-        messagebox.showerror(title="出错了！", message="手动设置检测点画面秒数有误（需大于0的数字，接受小数）")
+        messagebox.showerror(title=t("error_title"), message=t("manual_set_second_error"))
         return False
     return True  
     
 def check_measure_margin_second_2(measure_margin_second, fps, frame_cnt):
     if measure_margin_second >= frame_cnt / fps:
-        messagebox.showerror(title="出错了！", message="检测边距秒数必须小于视频长度")
+        messagebox.showerror(title=t("error_title"), message=t("margin_exceeds_length"))
         return False
     return True
-    
+
 def check_thread_num(thread_num):
-    if not(thread_num.isdigit() and 1 <= int(thread_num) <= 16):        
-        messagebox.showerror(title="出错了！", message="线程数必须为1~16的整数")
+    if not(thread_num.isdigit() and 1 <= int(thread_num) <= 16):
+        messagebox.showerror(title=t("error_title"), message=t("thread_num_error"))
         return False
     return True
-    
+
 def check_ignore_frame_cnt(ignore_frame_cnt):
-    if not(ignore_frame_cnt.isdigit()):        
-        messagebox.showerror(title="出错了！", message="忽视帧数必须为>=0的整数")
+    if not(ignore_frame_cnt.isdigit()):
+        messagebox.showerror(title=t("error_title"), message=t("ignore_frame_error"))
         return False
     return True
 
 def check_coordinates_setting():
-    if not(len(array_1) == 4 and len(array_2) == 8):     
-        messagebox.showerror(title="出错了！", message="未设置检测点")
+    if not(len(array_1) == 4 and len(array_2) == 8):
+        messagebox.showerror(title=t("error_title"), message=t("no_detection_points"))
         return False
     return True
 
@@ -197,8 +283,8 @@ def set_ignore_frame_cnt(ignore_frame_cnt):
 
 def set_coordinates():
     if os.path.exists(path + "/检测点.txt"):
-        f = open(path + "/检测点.txt")
-        
+        f = open(path + "/检测点.txt")  # Detection points
+
         for i in range(4):
             coord = [int(f.readline()) , int(f.readline())]
             array_1.append(coord)
@@ -341,11 +427,11 @@ def measure_margin(measure_margin_second):
                     or right_margin >= MARGIN_TH
                 ):
                     messagebox.showerror(
-                        title="出错了！", message="计算有误，请重新输入正确的检测边距秒数（显示编队的帧）"
+                        title=t("error_title"), message=t("calculation_error")
                     )
                     return False
                 set_margin(top_margin, bottom_margin, left_margin, right_margin)
-                messagebox.showinfo(title="消息", message="边距已填充")
+                messagebox.showinfo(title=t("info_title"), message=t("margin_filled"))
                 return True
             else:
                 return False
@@ -401,27 +487,28 @@ def crop(top_margin, bottom_margin, left_margin, right_margin):
                 #print(X, Y, W, H)              
                 
                 tc = TimeCost()
-                tc.time_start("裁剪")
+                tc.time_start(t("log_timing_cropping"))
 
                 subprocess.call('ffmpeg -loglevel quiet -i "'
                     + video_path + '" -b:v 0 -vf crop=' 
                     + W + ':' + H + ':' + X + ':' + Y + ' '+out,shell = True)
                 os.rename(video_path, "./" + orig_name)
-                print("已完成，请在working_folder下查看裁剪后的aftercrop.mp4文件，原文件已移动至上级目录")
-                
+                logger.info(t("log_crop_complete"))
+
                 tc.time_end()
                 # set_margin(0, 0, 0, 0)
-                # print("边距已重置为0")
+                # print("Margins reset to 0")
                 return True
 
 def show_desc():
+    global l3, l3_2, l3_3, l4, l4_2, l4_3
     b_show_desc.destroy()
-    l3 = Label(win, text="懒人模式将会自动剪掉暂停\n并且加速1倍速的部分为2倍速", font=20, height=3, width=30)
-    l3_2 = Label(win, text="适用于无需保留音效", font=20, width=30)
-    l3_3 = Label(win, text="此模式只会生成1个文件", font=20)
-    l4 = Label(win, text="正常模式将会自动分离暂停部分\n并且保留音效", font=20, height=3, width=30)
-    l4_2 = Label(win, text="适用于需要保留音效\n（注：正常模式不支持mkv格式）", font=20, width=30)
-    l4_3 = Label(win, text="此模式会生成较多文件", font=20)
+    l3 = Label(win, text=t("lazy_mode_desc1"), font=20, height=3, width=30)
+    l3_2 = Label(win, text=t("lazy_mode_desc2"), font=20, width=30)
+    l3_3 = Label(win, text=t("lazy_mode_desc3"), font=20)
+    l4 = Label(win, text=t("normal_mode_desc1"), font=20, height=3, width=30)
+    l4_2 = Label(win, text=t("normal_mode_desc2"), font=20, width=30)
+    l4_3 = Label(win, text=t("normal_mode_desc3"), font=20)
     l3.grid(row=2)
     l3_2.grid(row=2, column=1)
     l3_3.grid(row=2, column=2)
@@ -432,7 +519,7 @@ def show_desc():
 def save_settings(mode_i, top_margin, bottom_margin, left_margin, right_margin, thread_num, ignore_frame_cnt):
     if check_thread_num(thread_num):
         if check_margin(top_margin, bottom_margin, left_margin, right_margin):
-            f = open(path + "/设置.txt", "w+")
+            f = open(path + "/设置.txt", "w+")  # Settings
             f.write(str(mode_i) + "\n")
             f.write(top_margin + "\n")
             f.write(bottom_margin + "\n")
@@ -440,12 +527,13 @@ def save_settings(mode_i, top_margin, bottom_margin, left_margin, right_margin, 
             f.write(right_margin + "\n")
             f.write(thread_num + "\n")
             f.write(ignore_frame_cnt + "\n")
+            f.write(str(current_language) + "\n")  # Save language preference
             f.close()
-            messagebox.showinfo(title="消息", message="设置已保存")
+            messagebox.showinfo(title=t("info_title"), message=t("settings_saved"))
 
 def manual_set_save():
     if check_coordinates_setting():
-        f = open(path + "/检测点.txt", "w+")
+        f = open(path + "/检测点.txt", "w+")  # Save detection points
         f.write(str(array_1[0][0]) + "\n")
         f.write(str(array_1[0][1]) + "\n")
         f.write(str(array_1[1][0]) + "\n")
@@ -468,12 +556,12 @@ def manual_set_save():
         f.write(str(array_2[6][1]) + "\n")
         f.write(str(array_2[7][1]) + "\n")
         f.close()
-        messagebox.showinfo(title="消息", message="检测点坐标已保存")
-        
+        messagebox.showinfo(title=t("info_title"), message=t("detection_points_saved"))
+
 def cut_without_crop(
     mode, top_margin, bottom_margin, left_margin, right_margin, start_second, end_second, thread_num, ignore_frame_cnt
 ):
-    if e_manual_set_or_not.get() == "否" or check_coordinates_setting():
+    if e_manual_set_or_not.current() == 0 or check_coordinates_setting():
         if check_ignore_frame_cnt(ignore_frame_cnt):
             if check_thread_num(thread_num):
                 if check_start_end_seconds(start_second, end_second):
@@ -485,17 +573,19 @@ def cut_without_crop(
                         cap.release()
                         if check_margin(top_margin, bottom_margin, left_margin, right_margin):
                             if frame_cnt / int(fps) <= int(end_second):
-                                messagebox.showerror(title="出错了！", message="结束秒数必须小于视频长度")
+                                messagebox.showerror(title=t("error_title"), message=t("end_exceeds_video"))
                             else:
                                 if int(fps) != fps:  # warning only not error
                                     messagebox.showinfo(
-                                        title="注意",
-                                        message="视频帧数为非整数，可能会有剪辑问题，推荐使用其他软件重新导出为整数帧文件，点击确定或关闭窗口以继续",
+                                        title=t("warning_title"),
+                                        message=t("fps_warning"),
                                     )
                                 tc = TimeCost()
-                                tc.time_start("全流程")
-                                print(mode + "开始")
-                                if mode == "懒人模式（保留有效暂停）" or mode == "懒人模式（暂停全剪）":
+                                tc.time_start(t("log_timing_full_process"))
+                                # Get translated mode name for display
+                                mode_names = [t("mode_normal_audio_only"), t("mode_normal_keep_video"), t("mode_lazy_keep_valid"), t("mode_lazy_cut_all")]
+                                logger.info(mode_names[mode] + " " + t("log_started"))
+                                if mode in [2, 3]:  # Lazy mode indices
                                     lazy_version(
                                         video_path,
                                         mode,
@@ -508,7 +598,7 @@ def cut_without_crop(
                                         int(thread_num)
                                     )
                                     # already know these variables are int, thus cast here instead of inside
-                                    print("已完成，请在working_folder下查看output.mp4文件")
+                                    logger.info(t("log_lazy_complete"))
                                 else:  # normal mode otherwise
                                     normal_version(
                                         video_path,
@@ -521,7 +611,7 @@ def cut_without_crop(
                                         int(end_second),
                                         int(thread_num)
                                     )
-                                    print("已完成，请在working_folder下查看分离的mp4文件")
+                                    logger.info(t("log_normal_complete"))
                                 tc.time_end()
 
 def jump_to_tutorial(event):
@@ -532,12 +622,12 @@ def set_coordinates_sample():
     img2 = cv2.imread('sample2.jpg')
     img = cv2.imread('sample1.jpg')
     if img2 is None or img is None:
-        messagebox.showerror(title="出错了！", message="示例图不存在请重新下载")
+        messagebox.showerror(title=t("error_title"), message=t("sample_image_missing"))
     else:
         cv2.namedWindow("Sample_2", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Sample_2", (960,540))
         cv2.imshow('Sample_2', img2)
-        
+
         cv2.namedWindow("Sample_1", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Sample_1", (960,540))
         cv2.imshow('Sample_1', img)
@@ -551,47 +641,47 @@ def set_coordinates_manually(set_second_1, set_second_2):
             if video_path:
                 fps, lgt, hgt, frame_cnt = get_video_info(video_path)
                 cap = cv2.VideoCapture(video_path)
-                    
+
                 cap.set(
                     cv2.CAP_PROP_POS_FRAMES, int(fps * float(set_second_1))
                 )
                 ret, frame = cap.read()
-                
+
                 if ret:
                     cv2.namedWindow("Frame_1", cv2.WINDOW_NORMAL)
-                    messagebox.showinfo(title="消息", message="请参考示例图1按顺序点击以下4个点（红叉中心位置）：\n第一个点请点击右上角1倍速X正下方的三角形白色区域\n第二个点请点击右上角1倍速1正下方的灰色区域\n第三个点请点击右上角暂停正中的灰色区域\n第四个点请点击右上角暂停靠左的白色区域")
+                    messagebox.showinfo(title=t("info_title"), message=t("click_4_points"))
                     cv2.setWindowProperty("Frame_1", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                     cv2.imshow('Frame_1', frame)
-                    
-                    cv2.setMouseCallback('Frame_1', mouse_callback_1, array_1) 
-                    
+
+                    cv2.setMouseCallback('Frame_1', mouse_callback_1, array_1)
+
                 else:
-                    messagebox.showerror(title="出错了！", message="画面读取失败")
+                    messagebox.showerror(title=t("error_title"), message=t("frame_read_failed"))
                 cv2.waitKey()
                 if len(array_1) < 4:
-                    messagebox.showerror(title="出错了！", message="未设置4个点请重新设置")
+                    messagebox.showerror(title=t("error_title"), message=t("not_4_points"))
                     if cv2.getWindowProperty('Frame_1', cv2.WND_PROP_VISIBLE):
                         cv2.destroyWindow('Frame_1')
-                else:  
+                else:
                     cap.set(
                         cv2.CAP_PROP_POS_FRAMES, int(fps * float(set_second_2))
                     )
                     ret, frame = cap.read()
                     cap.release()
-                    
+
                     if ret:
                         cv2.namedWindow("Frame_2", cv2.WINDOW_NORMAL)
-                        messagebox.showinfo(title="消息", message="请参考示例图2按顺序点击以下8个点（红叉中心位置）：\n第一个点请点击中间P字母的T型连接处\n第二个点请点击中间U字母中间的灰色区域\n第三个点请点击中间U字母靠下的白色区域\n第四个点请点击中间E字母的T型连接处靠上的白色区域\n第五至第八个点请点击左侧技能二字上方的灰色条状（纵坐标必须与灰色条状持平 横坐标比较平均的点上就可以）")
+                        messagebox.showinfo(title=t("info_title"), message=t("click_8_points"))
                         cv2.setWindowProperty("Frame_2", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                         cv2.imshow('Frame_2', frame)
-                    
-                        cv2.setMouseCallback('Frame_2', mouse_callback_2, array_2) 
-                        
+
+                        cv2.setMouseCallback('Frame_2', mouse_callback_2, array_2)
+
                     else:
-                        messagebox.showerror(title="出错了！", message="画面读取失败")
+                        messagebox.showerror(title=t("error_title"), message=t("frame_read_failed"))
                     cv2.waitKey()
                     if len(array_2) < 8:
-                        messagebox.showerror(title="出错了！", message="未设置8个点请重新设置")
+                        messagebox.showerror(title=t("error_title"), message=t("not_8_points"))
                         if cv2.getWindowProperty('Frame_2', cv2.WND_PROP_VISIBLE):
                             cv2.destroyWindow('Frame_2')                                                
                 set_coordinates_labels()
@@ -639,7 +729,7 @@ class PointCoordinates:
     def calculate_or_use_coordinates(
         self, lgt, hgt, top_margin, bottom_margin, left_margin, right_margin
     ):
-        if e_manual_set_or_not.get() == "是":
+        if e_manual_set_or_not.current() == 1:
             self.acc_r_y = array_1[0][0]
             self.acc_r_x = array_1[0][1]
             self.acc_l_y = array_1[1][0]
@@ -813,27 +903,27 @@ def remove_ignore_frame_cnt_part(frame_cnt, keep_frame_y_n, vp_y_n):
                 start = i
                 flag = 1
 
-def print_progress(i, start, end, start_message, end_message):
+def print_progress(i, start, end, start_key, end_key, *format_args):
     if i == start:
-        print(start_message)
+        logger.info(t(start_key).format(*format_args) if format_args else t(start_key))
     elif i == end:
-        print(end_message)
+        logger.info(t(end_key).format(*format_args) if format_args else t(end_key))
     elif (
         (i - start) % ((end - start) / SHOW_PROGRESS_SEG) < 1 and i > start and i < end
     ):
-        print(f"{(i - start) / (end - start):.0%}")
+        logger.info(f"{(i - start) / (end - start):.0%}")
 
 def get_file_suffix(vp_value, pause_value):
     if vp_value == True:
-        return "有效暂停"
+        return t("valid_pause")
     elif pause_value == True:
-        return "无效暂停"
+        return t("invalid_pause")
     else:
         return ""
 
 def cleanup(working_path):
     tc = TimeCost()
-    tc.time_start("清理片段")    
+    tc.time_start(t("log_timing_cleaning_segments"))    
     for root, dirs, files in os.walk(working_path):
         for name in files:
             full_file_path = os.path.join(root, name)
@@ -841,12 +931,12 @@ def cleanup(working_path):
                 os.remove(full_file_path)
             elif get_frame_cnt(full_file_path) <= int(e_ignore_frame_cnt.get()) and os.path.splitext(full_file_path)[-1].split(".")[1] == 'mp4':
                 os.remove(full_file_path)
-                print("片段 " + name + " 小于等于忽视帧数，已删除")
+                logger.info(t("log_segment_deleted").format(name))
     tc.time_end()
 
 
 def update_entry_state(event):
-    if e_manual_set_or_not.get() == "是":
+    if e_manual_set_or_not.current() == 1:
         e_top_margin.config(state="disable")
         e_bottom_margin.config(state="disable")
         e_left_margin.config(state="disable")
@@ -884,13 +974,13 @@ class TimeCost:
 
     def time_start(self, process_name):
         self.start = datetime.datetime.now()
-        print("    为 " + process_name + " 计时")
-        print("    计时开始于 " + str(self.start))
+        logger.info(t("log_timing_for").format(process_name))
+        logger.info(t("log_timing_started").format(self.start))
 
     def time_end(self):
         self.end = datetime.datetime.now()
-        print("    计时结束于 " + str(self.end))
-        print("        用时 " + str(self.end - self.start))
+        logger.info(t("log_timing_ended").format(self.end))
+        logger.info(t("log_time_elapsed").format(self.end - self.start))
 
 
 def lazy_pause_analyze(
@@ -930,8 +1020,9 @@ def lazy_pause_analyze(
             i,
             start,
             end,
-            "线程" + str(process_num) + ":开始分析暂停位置",
-            "线程" + str(process_num) + "：100%",
+            "log_thread_analyze_pause_start",
+            "log_thread_100_percent",
+            process_num,
         )
     cap.release()
 
@@ -951,12 +1042,13 @@ def lazy_video_generate(
             i,
             start,
             end - 1,
-            "线程" + str(process_num) + "：开始剪掉暂停及加速",
-            "线程" + str(process_num) + "：100%",
+            "log_thread_cut_pause_accel_start",
+            "log_thread_100_percent",
+            process_num,
         )
 
     out.release()
-    # print("线程" + str(process_num) + "生成了文件 out_" + str(index) + vp + ".mp4")
+    # print("Thread " + str(process_num) + " generated file out_" + str(index) + vp + ".mp4")
     cap.release()
 
 def lazy_video_generate_2(
@@ -986,8 +1078,9 @@ def lazy_video_generate_2(
                 i,
                 start,
                 end - 1,
-                "线程" + str(process_num) + "：开始剪掉暂停及加速",
-                "线程" + str(process_num) + "：100%",
+                "log_thread_cut_pause_accel_start",
+                "log_thread_100_percent",
+                process_num,
             )
     out.release()
     cap.release()
@@ -1020,23 +1113,23 @@ def lazy_version(
 
     tc = TimeCost()
 
-    if mode == "懒人模式（保留有效暂停）":
-        tc.time_start("分析暂停")
+    if mode == 2:  # "Lazy mode (keep valid pauses)" index
+        tc.time_start(t("log_timing_analyzing_pauses"))
 
         threads = []
 
-        for t in range(thread_num):
+        for thread_idx in range(thread_num):
             cap_t = cv2.VideoCapture(video_path)
 
-            start = t * frame_per_thread
-            end = (t + 1) * frame_per_thread - 1
-            
+            start = thread_idx * frame_per_thread
+            end = (thread_idx + 1) * frame_per_thread - 1
+
             #print("start is", start, ", end is ", end)
-            
+
             thread = threading.Thread(
                 target=lazy_pause_analyze,
                 args=(
-                    t,
+                    thread_idx,
                     start_f,
                     end_f,
                     start,
@@ -1052,8 +1145,8 @@ def lazy_version(
             threads.append(thread)
             thread.start()
 
-        for t in threads:
-            t.join()
+        for thread in threads:
+            thread.join()
 
         expand_valid_pause_range(frame_cnt, pause_y_n, vp_y_n)
         
@@ -1066,58 +1159,58 @@ def lazy_version(
         
         tc.time_end()
 
-        tc.time_start("生成视频")
+        tc.time_start(t("log_timing_generating_video"))
 
         threads = []
 
-        for t in range(thread_num):
+        for thread_idx in range(thread_num):
             cap_t = cv2.VideoCapture(video_path)
 
-            start = t * frame_per_thread
-            end = (t + 1) * frame_per_thread if t != thread_num - 1 else frame_cnt
+            start = thread_idx * frame_per_thread
+            end = (thread_idx + 1) * frame_per_thread if thread_idx != thread_num - 1 else frame_cnt
 
             thread = threading.Thread(
                 target=lazy_video_generate,
-                args=(t, start, end, cap_t, keep_frame_y_n, vp_y_n, fps, lgt, hgt)
+                args=(thread_idx, start, end, cap_t, keep_frame_y_n, vp_y_n, fps, lgt, hgt)
             )
             threads.append(thread)
             thread.start()
 
             f = open(working_path + TEMP_FILENAME, "a")
-            f.write("file " + TEMP_PREFIX + str(t) + ".mp4" + "\n")
+            f.write("file " + TEMP_PREFIX + str(thread_idx) + ".mp4" + "\n")
 
         f.close()
 
-        for t in threads:
-            t.join()
+        for thread in threads:
+            thread.join()
 
         tc.time_end()
 
-    elif mode == "懒人模式（暂停全剪）":
-        tc.time_start("生成视频")
+    elif mode == "Lazy mode (cut all pauses)":
+        tc.time_start(t("log_timing_generating_video"))
 
         threads = []
 
-        for t in range(thread_num):
+        for thread_idx in range(thread_num):
             cap_t = cv2.VideoCapture(video_path)
 
-            start = t * frame_per_thread
-            end = (t + 1) * frame_per_thread 
+            start = thread_idx * frame_per_thread
+            end = (thread_idx + 1) * frame_per_thread
 
             thread = threading.Thread(
                 target=lazy_video_generate_2,
-                args=(t, start_f, end_f, start, end, cap_t, pc, fps, lgt, hgt)
+                args=(thread_idx, start_f, end_f, start, end, cap_t, pc, fps, lgt, hgt)
             )
             threads.append(thread)
             thread.start()
 
             f = open(working_path + TEMP_FILENAME, "a")
-            f.write("file " + TEMP_PREFIX + str(t) + ".mp4" + "\n")
+            f.write("file " + TEMP_PREFIX + str(thread_idx) + ".mp4" + "\n")
 
         f.close()
 
-        for t in threads:
-            t.join()
+        for thread in threads:
+            thread.join()
 
         tc.time_end()
 
@@ -1159,8 +1252,7 @@ def normal_pause_analyze(
     process_num, start_f, end_f, start, end, cap, pc, pause_y_n, vp_y_n
 ):
     if end_f < start or end < start_f:
-        print("开始结束秒数与被分配区间没有交集，线程" + str(process_num) + "未启动" 
-            + "\n请尽量只将需要剪辑的部分放入使用")
+        logger.info(t("log_thread_no_intersection").format(process_num))
     else:
         if start < start_f:
             start = start_f
@@ -1178,8 +1270,9 @@ def normal_pause_analyze(
                     i,
                     start,
                     end,
-                    "线程" + str(process_num) + "：开始分析暂停位置",
-                    "线程" + str(process_num) + "：100%",
+                    "log_thread_analyze_pause_start",
+                    "log_thread_100_percent",
+                    process_num,
                 )
         cap.release()
 
@@ -1199,7 +1292,7 @@ def normal_video_generate(
         ret, frame = cap.read()
         if pause_y_n[i] != pause_y_n[i - 1]:
             out.release()
-            # print("线程" + str(process_num) + "生成了文件 out_" + str(index) + vp + ".mp4")
+            # print("Thread " + str(process_num) + " generated file out_" + str(index) + vp + ".mp4")
             index += 1
             vp = get_file_suffix(vp_y_n[i], pause_y_n[i])
             out = cv2.VideoWriter(
@@ -1210,12 +1303,13 @@ def normal_video_generate(
             i,
             start + 1,
             end - 1,
-            "线程" + str(process_num) + "：开始生成视频片段",
-            "线程" + str(process_num) + "：100%",
+            "log_thread_generate_video_start",
+            "log_thread_100_percent",
+            process_num,
         )
 
     out.release()
-    # print("线程" + str(process_num) + "生成了文件 out_" + str(index) + vp + ".mp4")
+    # print("Thread " + str(process_num) + " generated file out_" + str(index) + vp + ".mp4")
     cap.release()
 
 def normal_audio_generate(
@@ -1231,14 +1325,14 @@ def normal_audio_generate(
             out_a = sound[start_seg * inc : i * inc + fps]
             # print("start is ", start_seg * inc, ", end is ", i * inc + fps)
             out_a.export(working_path + TEMP_PREFIX + str(index) + vp + ".mp3")
-            # print("线程" + str(process_num) + "生成了文件 out_" + str(index) + vp + ".mp3")
+            # print("Thread " + str(process_num) + " generated file out_" + str(index) + vp + ".mp3")
             vp = get_file_suffix(vp_y_n[i], pause_y_n[i])
             index += 1
             start_seg = i
     out_a = sound[start_seg * inc : i * inc + fps]
     # print("start is ", start_seg * inc, ", end is ", i * inc + fps)
     out_a.export(working_path + TEMP_PREFIX + str(index) + vp + ".mp3")
-    # print("线程" + str(process_num) + "生成了文件 out_" + str(index) + vp + ".mp3")
+    # print("Thread " + str(process_num) + " generated file out_" + str(index) + vp + ".mp3")
 
 def normal_combine(process_num, prefix, start, end, has_sound, mode):
     for i in range(start, end):
@@ -1270,7 +1364,7 @@ def normal_combine(process_num, prefix, start, end, has_sound, mode):
                 + "有效暂停.mp4",
                 shell=True,
             )
-            if mode == "正常模式（保留无效暂停视频）":
+            if mode == "Normal mode (keep invalid pause video)":
                 subprocess.call(
                     "ffmpeg -loglevel quiet -i "
                     + old_name
@@ -1295,8 +1389,9 @@ def normal_combine(process_num, prefix, start, end, has_sound, mode):
                 i,
                 start,
                 end - 1,
-                "线程" + str(process_num) + "：开始合并音频视频片段",
-                "线程" + str(process_num) + ":100%",
+                "log_thread_merge_audio_video_start",
+                "log_thread_100_percent",
+                process_num,
             )
             i = i + 1
         else:
@@ -1314,7 +1409,7 @@ def normal_combine(process_num, prefix, start, end, has_sound, mode):
                 )
             except:
                 dummy = 0
-            if mode == "正常模式（保留无效暂停视频）":
+            if mode == "Normal mode (keep invalid pause video)":
                 try:
                     os.rename(
                         old_name + "无效暂停.mp4",
@@ -1326,8 +1421,9 @@ def normal_combine(process_num, prefix, start, end, has_sound, mode):
                 i,
                 start,
                 end - 1,
-                "线程" + str(process_num) + "：视频未检测出音频，仅重命名",
-                "线程" + str(process_num) + ":100%",
+                "log_thread_no_audio_rename",
+                "log_thread_100_percent",
+                process_num,
             )
 
 
@@ -1358,37 +1454,37 @@ def normal_version(
 
     tc = TimeCost()
 
-    tc.time_start("分析暂停")
+    tc.time_start(t("log_timing_analyzing_pauses"))
 
     threads = []
     frame_per_thread = math.floor(frame_cnt / thread_num)
-    
-    for t in range(thread_num):
-        # 创建独立VideoCapture对象避免资源冲突
+
+    for thread_idx in range(thread_num):
+        # Create independent VideoCapture object to avoid resource conflicts
         cap_t = cv2.VideoCapture(video_path)
 
-        # 计算每个线程的帧范围
-        start = t * frame_per_thread if t != 0 else start_f
-        end = (t + 1) * frame_per_thread - 1 if t != thread_num - 1 else end_f
+        # Calculate frame range for each thread
+        start = thread_idx * frame_per_thread if thread_idx != 0 else start_f
+        end = (thread_idx + 1) * frame_per_thread - 1 if thread_idx != thread_num - 1 else end_f
 
-        # 创建线程
+        # Create thread
         thread = threading.Thread(
             target=normal_pause_analyze,
-            args=(t, start_f, end_f, start, end, cap_t, pc, pause_y_n, vp_y_n)
+            args=(thread_idx, start_f, end_f, start, end, cap_t, pc, pause_y_n, vp_y_n)
         )
 
         threads.append(thread)
         thread.start()
 
-    # 等待所有线程完成
-    for t in threads:
-        t.join()
+    # Wait for all threads to complete
+    for thread in threads:
+        thread.join()
 
     expand_valid_pause_range(frame_cnt, pause_y_n, vp_y_n)
     
     tc.time_end()
 
-    tc.time_start("生成视频片段")
+    tc.time_start(t("log_timing_generating_video_segments"))
 
     bounds, seg_cnts = normal_get_video_audio_bounds(
         frame_cnt, frame_per_thread, pause_y_n, thread_num
@@ -1398,23 +1494,23 @@ def normal_version(
     
     threads = []
 
-    for t in range(len(bounds)):
+    for thread_idx in range(len(bounds)):
         cap_t = cv2.VideoCapture(video_path)
 
-        start = bounds[t]
-        end = bounds[t + 1] if t != len(bounds) - 1 else frame_cnt
-        start_index = seg_cnts[t]
+        start = bounds[thread_idx]
+        end = bounds[thread_idx + 1] if thread_idx != len(bounds) - 1 else frame_cnt
+        start_index = seg_cnts[thread_idx]
 
         thread = threading.Thread(
             target=normal_video_generate,
-            args=(t, start_index, start, end, cap_t, pause_y_n, vp_y_n, fps, lgt, hgt)
+            args=(thread_idx, start_index, start, end, cap_t, pause_y_n, vp_y_n, fps, lgt, hgt)
         )
-        # print("args are ", t, start_index, start, end)
+        # print("args are ", thread_idx, start_index, start, end)
         threads.append(thread)
         thread.start()
 
-    for t in threads:
-        t.join()
+    for thread in threads:
+        thread.join()
 
     tc.time_end()
 
@@ -1427,24 +1523,24 @@ def normal_version(
         has_sound = False
 
     if has_sound:
-        tc.time_start("生成音频片段")
+        tc.time_start(t("log_timing_generating_audio_segments"))
 
         threads = []
 
-        for t in range(len(bounds)):
-            start = bounds[t]
-            end = bounds[t + 1] if t != len(bounds) - 1 else frame_cnt
-            start_index = seg_cnts[t]
+        for thread_idx in range(len(bounds)):
+            start = bounds[thread_idx]
+            end = bounds[thread_idx + 1] if thread_idx != len(bounds) - 1 else frame_cnt
+            start_index = seg_cnts[thread_idx]
 
             thread = threading.Thread(
                 target=normal_audio_generate,
-                args=(t, start_index, start, end, sound, pause_y_n, vp_y_n, fps)
+                args=(thread_idx, start_index, start, end, sound, pause_y_n, vp_y_n, fps)
             )
             threads.append(thread)
             thread.start()
 
-        for t in threads:
-            t.join()
+        for thread in threads:
+            thread.join()
 
         tc.time_end()
 
@@ -1455,26 +1551,26 @@ def normal_version(
     else:
         count = len(working_folder_list) - 1
 
-    tc.time_start("合并视频音频")
+    tc.time_start(t("log_timing_merging_video_audio"))
 
     threads = []
     file_per_thread = math.floor(count / thread_num)
 
-    for t in range(thread_num):
+    for thread_idx in range(thread_num):
 
-        start = t * file_per_thread
-        end = (t + 1) * file_per_thread if t != thread_num - 1 else count
+        start = thread_idx * file_per_thread
+        end = (thread_idx + 1) * file_per_thread if thread_idx != thread_num - 1 else count
         prefix = pow(10, len(str(count)))
 
         thread = threading.Thread(
-            target=normal_combine, args=(t, prefix, start, end, has_sound, mode)
+            target=normal_combine, args=(thread_idx, prefix, start, end, has_sound, mode)
         )
 
         threads.append(thread)
         thread.start()
 
-    for t in threads:
-        t.join()
+    for thread in threads:
+        thread.join()
 
     tc.time_end()
 
@@ -1482,47 +1578,53 @@ def normal_version(
     
 # main here
 win = Tk()
-win.title("明日方舟自动分离/剪掉暂停")
+win.title(t("window_title"))
 
 win.geometry(str(1300 + len(path.encode("utf-8")) * 5) + "x900")
 
-l_text_working_path = Label(win, text="当前工作目录", font=20, height=3)
+l_text_working_path = Label(win, text=t("current_working_dir"), font=20, height=3)
 l_working_path = Label(win, text=working_path, bg="lightgray", font=20, height=3)
 
-l_mode = Label(win, text="选择模式", font=20, height=3)
+l_mode = Label(win, text=t("select_mode"), font=20, height=3)
 e_mode = ttk.Combobox(win, font=20, height=4, width=28)
-e_mode["value"] = ("正常模式（仅保留无效暂停音效）", "正常模式（保留无效暂停视频）", "懒人模式（保留有效暂停）", "懒人模式（暂停全剪）")
+e_mode["value"] = (t("mode_normal_audio_only"), t("mode_normal_keep_video"), t("mode_lazy_keep_valid"), t("mode_lazy_cut_all"))
 win.option_add("*TCombobox*Listbox.font", 20)
 e_mode.current(1)  # give default
-b_show_desc = Button(win, text="显示说明", command=show_desc, font=20)
+b_show_desc = Button(win, text=t("show_desc"), command=show_desc, font=20)
 
-l_top_margin = Label(win, text="上边距（像素数）", font=20, height=2)
+# Language selector
+l_language = Label(win, text=t("language"), font=20, height=2)
+e_language = ttk.Combobox(win, values=["中文", "English"], font=20, width=10)
+e_language.current(0 if DEFAULT_LANGUAGE == "cn" else 1)
+e_language.bind("<<ComboboxSelected>>", change_language)
+
+l_top_margin = Label(win, text=t("top_margin"), font=20, height=2)
 e_top_margin = Entry(win, bg="white", font=20)
 
-l_bottom_margin = Label(win, text="下边距", font=20, height=2)
+l_bottom_margin = Label(win, text=t("bottom_margin"), font=20, height=2)
 e_bottom_margin = Entry(win, bg="white", font=20)
 
-l_left_margin = Label(win, text="左边距", font=20, height=2)
+l_left_margin = Label(win, text=t("left_margin"), font=20, height=2)
 e_left_margin = Entry(win, bg="white", font=20)
 
-l_right_margin = Label(win, text="右边距", font=20, height=2)
+l_right_margin = Label(win, text=t("right_margin"), font=20, height=2)
 e_right_margin = Entry(win, bg="white", font=20)
 
 set_margin(0, 0, 0, 0)
 
-l_thread_num = Label(win, text="线程数", font=20, height=2)
+l_thread_num = Label(win, text=t("thread_num"), font=20, height=2)
 e_thread_num = Entry(win, bg="white", font=20)
 
 e_thread_num.insert(0, DEFAULT_THREAD_NUM)
 
-l_ignore_frame_cnt = Label(win, text="忽视小于等于该帧数的片段", font=20, height=2)
+l_ignore_frame_cnt = Label(win, text=t("ignore_frame_cnt"), font=20, height=2)
 e_ignore_frame_cnt = Entry(win, bg="white", font=20)
 
 e_ignore_frame_cnt.insert(0, DEFAULT_IGNORE_FRAME_CNT)
 
 b_save_settings = Button(
     win,
-    text="保存设置",
+    text=t("save_settings"),
     command=lambda: save_settings(
         e_mode.current(),
         e_top_margin.get(),
@@ -1535,18 +1637,18 @@ b_save_settings = Button(
     font=20
 )
 
-l_measure_margin_second = Label(win, text="检测边距秒数（支持小数）", font=20, height=2)
+l_measure_margin_second = Label(win, text=t("measure_margin_second"), font=20, height=2)
 e_measure_margin_second = Entry(win, bg="white", font=20)
 
 b_measure_margin = Button(
     win,
-    text="检测边距",
+    text=t("measure_margin"),
     command=lambda: measure_margin(e_measure_margin_second.get()),
     font=20
 )
 b_crop = Button(
     win,
-    text="按边距裁剪（边距将被重置为0）",
+    text=t("crop_btn"),
     command=lambda: crop(
         e_top_margin.get(),
         e_bottom_margin.get(),
@@ -1558,9 +1660,9 @@ b_crop = Button(
 
 b_cut_without_crop = Button(
     win,
-    text="点击开始自动分离/剪掉暂停（不包含边距裁剪）",
+    text=t("start_without_crop"),
     command=lambda: cut_without_crop(
-        e_mode.get(),
+        e_mode.current(),
         e_top_margin.get(),
         e_bottom_margin.get(),
         e_left_margin.get(),
@@ -1574,10 +1676,10 @@ b_cut_without_crop = Button(
 )
 b_cut_with_crop = Button(
     win,
-    text="点击开始自动分离/剪掉暂停（包含边距裁剪）",
+    text=t("start_with_crop"),
     command=lambda: cut_with_crop(
         e_mode.get(),
-        e_start_second.get(), 
+        e_start_second.get(),
         e_end_second.get(),
         e_thread_num.get(),
         e_measure_margin_second.get(),
@@ -1586,7 +1688,7 @@ b_cut_with_crop = Button(
     font=20
 )
 
-l_tutorial = Label(win, text="详细操作教程：", font=20, height=2)
+l_tutorial = Label(win, text=t("tutorial"), font=20, height=2)
 
 ft = tkFont.Font(family="Fixdsys", size=11, weight=tkFont.NORMAL, underline=1)
 l_tutorial_url = Label(
@@ -1595,43 +1697,43 @@ l_tutorial_url = Label(
 l_tutorial_url.bind("<ButtonPress-1>", jump_to_tutorial)
 
 
-l_start_second = Label(win, text="开始秒数", font=20, height=2)
+l_start_second = Label(win, text=t("start_second"), font=20, height=2)
 e_start_second = Entry(win, bg="white", font=20)
 
-l_end_second = Label(win, text="结束秒数", font=20, height=2)
+l_end_second = Label(win, text=t("end_second"), font=20, height=2)
 e_end_second = Entry(win, bg="white", font=20)
 
 
 
 
-l_manual_set_second = Label(win, text="手动设置检测点画面秒数（支持小数）", font=20, height=2)
+l_manual_set_second = Label(win, text=t("manual_set_second"), font=20, height=2)
 e_manual_set_second_1 = Entry(win, bg="white", font=20, width=10)
 e_manual_set_second_2 = Entry(win, bg="white", font=20, width=10)
 b_manual_set = Button(
     win,
-    text="手动设置",
+    text=t("manual_set"),
     command=lambda: set_coordinates_manually(e_manual_set_second_1.get(),e_manual_set_second_2.get()),
     font=20
 )
 b_manual_set_sample = Button(
     win,
-    text="设置示例图",
+    text=t("sample_images"),
     command=lambda: set_coordinates_sample(),
     font=20
 )
 b_manual_set_save = Button(
     win,
-    text="保存检测点",
+    text=t("save_detection_points"),
     command=lambda: manual_set_save(),
     font=20
 )
 l_pause_middle = Label(win, text="y,x", font=20, height=2)
-l_pause_left = Label(win, text="y,x", font=20, height=2) 
+l_pause_left = Label(win, text="y,x", font=20, height=2)
 
-l_frame_desc = Label(win, text="请参考示例图", font=20, height=2)
-l_frame_1_desc = Label(win, text="前者秒数为1倍速无暂停画面", font=20, height=2)
-l_frame_2_desc = Label(win, text="后者秒数为有效暂停画面", font=20, height=2)
- 
+l_frame_desc = Label(win, text=t("refer_sample"), font=20, height=2)
+l_frame_1_desc = Label(win, text=t("frame_1_desc"), font=20, height=2)
+l_frame_2_desc = Label(win, text=t("frame_2_desc"), font=20, height=2)
+
 l_acc_left = Label(win, text="y,x", font=20, height=2)
 l_acc_right = Label(win, text="y,x", font=20, height=2)
 
@@ -1643,9 +1745,9 @@ l_middle_pause_right = Label(win, text="y,x", font=20, height=2)
 l_valid_pause = Label(win, text="y,x1,x2,x3,x4", font=20, height=2)
 #l_valid_pause_2 = Label(win, text="y,x1,x2,x3,x4", font=20, height=2)
 
-l_manual_set_or_not = Label(win, text="是否手动设置检测点", font=20, height=3)
+l_manual_set_or_not = Label(win, text=t("manual_set_or_not"), font=20, height=3)
 
-e_manual_set_or_not = ttk.Combobox(win, values=["否","是"], font=20, height=4, width=10)
+e_manual_set_or_not = ttk.Combobox(win, values=(t("no"), t("yes")), font=20, height=4, width=10)
 e_manual_set_or_not.current(0)
 e_manual_set_second_1.config(state="disabled")
 e_manual_set_second_2.config(state="disabled")
@@ -1656,6 +1758,8 @@ e_manual_set_or_not.bind("<<ComboboxSelected>>", update_entry_state)
 
 l_text_working_path.grid(row=0)
 l_working_path.grid(row=0, column=1)
+l_language.grid(row=0, column=2)
+e_language.grid(row=0, column=3)
 l_mode.grid(row=1)
 e_mode.grid(row=1, column=1)
 b_show_desc.grid(row=1, column=2)
@@ -1723,9 +1827,18 @@ if os.path.exists(path + "/设置.txt"):
     )
     set_thread_num(int(f.readline()))
     set_ignore_frame_cnt(int(f.readline()))
+    # Read language preference (new field)
+    lang_line = f.readline().strip()
+    if lang_line:
+        set_language(lang_line)  # Use i18n function
+        current_language = get_current_language()
+        e_language.current(0 if current_language == "cn" else 1)
+        update_all_text()
     f.close()
 
 set_coordinates()
 
+# Register language change callback
+register_language_change_callback(update_all_text)
 
 win.mainloop()
