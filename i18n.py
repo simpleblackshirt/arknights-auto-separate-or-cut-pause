@@ -88,8 +88,8 @@ TRANSLATIONS = {
         "click_4_points": "请参考示例图1按顺序点击以下4个点（红叉中心位置）：\n第一个点请点击右上角1倍速X正下方的三角形白色区域\n第二个点请点击右上角1倍速1正下方的灰色区域\n第三个点请点击右上角暂停正中的灰色区域\n第四个点请点击右上角暂停靠左的白色区域",
         "click_8_points": "请参考示例图2按顺序点击以下8个点（红叉中心位置）：\n第一个点请点击中间P字母的T型连接处\n第二个点请点击中间U字母中间的灰色区域\n第三个点请点击中间U字母靠下的白色区域\n第四个点请点击中间E字母的T型连接处靠上的白色区域\n第五至第八个点请点击左侧技能二字上方的灰色条状（纵坐标必须与灰色条状持平 横坐标比较平均的点上就可以）",
         # File suffixes (internal use)
-        "valid_pause": "有效暂停",
-        "invalid_pause": "无效暂停",
+        "valid_pause": "_有效暂停",
+        "invalid_pause": "_无效暂停",
         # Console logging messages
         "log_crop_complete": "已完成，请在working_folder下查看裁剪后的aftercrop.mp4文件，原文件已移动至上级目录",
         "log_started": "开始",
@@ -192,8 +192,8 @@ TRANSLATIONS = {
         "click_4_points": "Please refer to sample image 1 and click these 4 points in order (center of red X markers):\nPoint 1: Click the triangular white area directly below the 1x speed X in the top right corner\nPoint 2: Click the gray area directly below the 1x speed 1 in the top right corner\nPoint 3: Click the gray area in the center of the pause icon in the top right corner\nPoint 4: Click the white area on the left side of the pause icon in the top right corner",
         "click_8_points": "Please refer to sample image 2 and click these 8 points in order (center of red X markers):\nPoint 1: Click the T-shaped connection of the P letter in the center\nPoint 2: Click the gray area in the middle of the U letter in the center\nPoint 3: Click the white area below the U letter in the center\nPoint 4: Click the white area above the T-shaped connection of the E letter in the center\nPoints 5-8: Click the gray bar above 'Skill' (技能) on the left side (vertical coordinate must align with gray bar, horizontal coordinate should be evenly distributed points)",
         # File suffixes (internal use)
-        "valid_pause": "valid_pause",
-        "invalid_pause": "invalid_pause",
+        "valid_pause": "_valid_pause",
+        "invalid_pause": "_invalid_pause",
         # Console logging messages
         "log_crop_complete": "Completed. Please check the cropped aftercrop.mp4 file in working_folder. Original file has been moved to parent directory",
         "log_started": "started",

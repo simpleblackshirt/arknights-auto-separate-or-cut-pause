@@ -1186,7 +1186,7 @@ def lazy_version(
 
         tc.time_end()
 
-    elif mode == "Lazy mode (cut all pauses)":
+    elif mode == 3:  # Lazy mode (cut all pauses)
         tc.time_start(t("log_timing_generating_video"))
 
         threads = []
@@ -1355,33 +1355,33 @@ def normal_combine(process_num, prefix, start, end, has_sound, mode):
             subprocess.call(
                 "ffmpeg -loglevel quiet -i "
                 + old_name
-                + "有效暂停.mp4"
+                + t("valid_pause") + ".mp4"
                 + " -i "
                 + old_name
-                + "有效暂停.mp3"
+                + t("valid_pause") + ".mp3"
                 + " -c:v copy -c:a aac "
                 + new_name
-                + "有效暂停.mp4",
+                + t("valid_pause") + ".mp4",
                 shell=True,
             )
-            if mode == "Normal mode (keep invalid pause video)":
+            if mode == 1:  # Normal mode (keep invalid pause video)
                 subprocess.call(
                     "ffmpeg -loglevel quiet -i "
                     + old_name
-                    + "无效暂停.mp4"
+                    + t("invalid_pause") + ".mp4"
                     + " -i "
                     + old_name
-                    + "无效暂停.mp3"
+                    + t("invalid_pause") + ".mp3"
                     + " -c:v copy -c:a aac "
                     + new_name
-                    + "无效暂停.mp4",
+                    + t("invalid_pause") + ".mp4",
                     shell=True,
                 )
             else:
                 try:
                     os.rename(                        
-                        old_name + "无效暂停.mp3",
-                        new_name + "无效暂停.mp3",
+                        old_name + t("invalid_pause") + ".mp3",
+                        new_name + t("invalid_pause") + ".mp3",
                     )
                 except:
                     dummy = 0
@@ -1404,16 +1404,16 @@ def normal_combine(process_num, prefix, start, end, has_sound, mode):
                 dummy = 0
             try:
                 os.rename(
-                    old_name + "有效暂停.mp4",
-                    new_name + "有效暂停.mp4",
+                    old_name + t("valid_pause") + ".mp4",
+                    new_name + t("valid_pause") + ".mp4",
                 )
             except:
                 dummy = 0
-            if mode == "Normal mode (keep invalid pause video)":
+            if mode == 1:  # Normal mode (keep invalid pause video)
                 try:
                     os.rename(
-                        old_name + "无效暂停.mp4",
-                        new_name + "无效暂停.mp4",
+                        old_name + t("invalid_pause") + ".mp4",
+                        new_name + t("invalid_pause") + ".mp4",
                     )
                 except:
                     dummy = 0
@@ -1678,7 +1678,7 @@ b_cut_with_crop = Button(
     win,
     text=t("start_with_crop"),
     command=lambda: cut_with_crop(
-        e_mode.get(),
+        e_mode.current(),
         e_start_second.get(),
         e_end_second.get(),
         e_thread_num.get(),
