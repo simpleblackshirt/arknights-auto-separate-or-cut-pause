@@ -31,6 +31,9 @@ os.environ['PATH'] = bin_path + os.pathsep + os.environ.get('PATH','')
 array_1 = []
 array_2 = []
 
+# Video metadata cache for performance optimization
+_video_metadata_cache = {}
+
 # Constants
 
 TEMP_FILENAME = "temp_list.txt"
@@ -102,7 +105,7 @@ from i18n import (
 # Initialize default language before creating any GUI elements
 set_language(DEFAULT_LANGUAGE, notify=False)
 
-# Global language variable (for backward compatibility)
+# Global language variable
 current_language = get_current_language()
 
 def change_language(event=None):
@@ -283,28 +286,25 @@ def set_ignore_frame_cnt(ignore_frame_cnt):
 
 def set_coordinates():
     if os.path.exists(path + "/检测点.txt"):
-        f = open(path + "/检测点.txt")  # Detection points
+        with open(path + "/检测点.txt") as f:  # Detection points
+            for i in range(4):
+                coord = [int(f.readline()) , int(f.readline())]
+                array_1.append(coord)
 
-        for i in range(4):
-            coord = [int(f.readline()) , int(f.readline())]
-            array_1.append(coord)
-            
-        for i in range(4):
-            coord = [int(f.readline()) , int(f.readline())]
-            array_2.append(coord)
-        
-        valid_pause_y = int(f.readline())
-        
-        for i in range(4):
-            coord = [valid_pause_y , int(f.readline())]
-            array_2.append(coord)
-        
-        set_coordinates_labels()        
-        
-        #print(array_1)
-        #print(array_2)
-        
-        f.close()
+            for i in range(4):
+                coord = [int(f.readline()) , int(f.readline())]
+                array_2.append(coord)
+
+            valid_pause_y = int(f.readline())
+
+            for i in range(4):
+                coord = [valid_pause_y , int(f.readline())]
+                array_2.append(coord)
+
+            set_coordinates_labels()
+
+            #print(array_1)
+            #print(array_2)
    
 def set_coordinates_labels():
     if len(array_1) == 4 and len(array_2) == 8:
@@ -328,21 +328,44 @@ def set_coordinates_labels():
         l_middle_pause_right.config(text="y,x")
         l_valid_pause.config(text="y,x1,x2,x3,x4")
  
-def get_video_info(video_path):
+def get_video_info(video_path, use_cache=True):
+    if use_cache and video_path in _video_metadata_cache:
+        return _video_metadata_cache[video_path]
     cap = cv2.VideoCapture(video_path)
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     lgt = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     hgt = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     frame_cnt = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
-    return fps, lgt, hgt, frame_cnt  
-    
-def get_frame_cnt(video_path):
+    result = (fps, lgt, hgt, frame_cnt)
+    if use_cache:
+        _video_metadata_cache[video_path] = result
+    return result
+
+def get_frame_cnt(video_path, use_cache=True):
+    if use_cache and video_path in _video_metadata_cache:
+        return _video_metadata_cache[video_path][3]  # Return frame_cnt
     cap = cv2.VideoCapture(video_path)
     frame_cnt = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
-    return frame_cnt  
-    
+    if use_cache:
+        # Cache just the frame count if full metadata not cached
+        if video_path in _video_metadata_cache:
+            _video_metadata_cache[video_path] = (
+                _video_metadata_cache[video_path][0],
+                _video_metadata_cache[video_path][1],
+                _video_metadata_cache[video_path][2],
+                frame_cnt
+            )
+        else:
+            _video_metadata_cache[video_path] = (0, 0, 0, frame_cnt)
+    return frame_cnt
+
+def clear_video_cache():
+    """Clear the video metadata cache. Call when video files are modified/deleted."""
+    global _video_metadata_cache
+    _video_metadata_cache.clear()
+
 def measure_margin(measure_margin_second):
     if check_measure_margin_second(measure_margin_second):
         video_path = check_file_and_return_path()
@@ -365,59 +388,71 @@ def measure_margin(measure_margin_second):
 
                 flag = False
                 red_cnt = 1
-                for rgt_check in range(1, int(lgt / 2)):
-                    for y in range(int(hgt / 2)):
-                        x = lgt - rgt_check
-                        if (
-                            frame[y, x][RED] >= DARK_RED_TH[RED]
-                            and frame[y, x][BLUE] <= DARK_RED_TH[BLUE]
-                            and frame[y, x][GREEN] <= DARK_RED_TH[GREEN]
-                        ):
-                            right_margin = rgt_check - 1
-                            first_y = y
-                            y += 1
-                            while (
-                                frame[y, x][RED] >= DARK_RED_TH[RED]
-                                and frame[y, x][BLUE] <= DARK_RED_TH[BLUE]
-                                and frame[y, x][GREEN] <= DARK_RED_TH[GREEN]
-                            ):
-                                y += 1
+                # Vectorized right margin and top margin detection (red vertical line)
+                # Only check the right half of the frame, up to half height
+                right_half = frame[:int(hgt/2), int(lgt/2):]
+                red_mask = (
+                    (right_half[:, :, RED] >= DARK_RED_TH[RED]) &
+                    (right_half[:, :, BLUE] <= DARK_RED_TH[BLUE]) &
+                    (right_half[:, :, GREEN] <= DARK_RED_TH[GREEN])
+                )
+                # Find rightmost column with red pixels
+                red_columns = np.any(red_mask, axis=0)
+                if np.any(red_columns):
+                    # Get index of rightmost red column (from right side)
+                    rightmost_red_idx = len(red_columns) - 1 - np.argmax(red_columns[::-1])
+                    right_margin = int(lgt/2) - rightmost_red_idx - 1
+                    # Find top red pixel position for top margin calculation
+                    red_col_mask = red_mask[:, rightmost_red_idx]
+                    red_indices = np.where(red_col_mask)[0]
+                    if len(red_indices) > 0:
+                        first_y = red_indices[0]
+                        # Count consecutive red pixels from first_y
+                        red_cnt = 1
+                        for idx in range(1, len(red_indices)):
+                            if red_indices[idx] == red_indices[idx-1] + 1:
                                 red_cnt += 1
-                            # print(red_cnt)
-                            top_margin = int(
-                                first_y - red_cnt * RED_RATIO_FOR_TOP_MARGIN
-                            )
+                            else:
+                                break
+                        top_margin = int(first_y - red_cnt * RED_RATIO_FOR_TOP_MARGIN)
+                    else:
+                        top_margin = MARGIN_TH
+                else:
+                    top_margin = MARGIN_TH
+                    right_margin = MARGIN_TH
+                    flag = True  # No red found, skip to next check
 
-                            flag = True
+                if not flag:
+                    # Vectorized bottom margin detection (blue horizontal line)
+                    # Check bottom half of frame
+                    bottom_half = frame[int(hgt/2):, :]
+                    blue_mask = (
+                        (bottom_half[:, :, BLUE] >= BLUE_TH[BLUE]) &
+                        (bottom_half[:, :, GREEN] >= BLUE_TH[GREEN]) &
+                        (bottom_half[:, :, RED] <= BLUE_TH[RED])
+                    )
+                    blue_row_counts = np.sum(blue_mask, axis=1)
+                    bottom_margin = MARGIN_TH
+                    for bot_check in range(1, min(int(hgt / 2), len(blue_row_counts))):
+                        row_idx = len(blue_row_counts) - bot_check
+                        blue_cnt = blue_row_counts[row_idx]
+                        if BLUE_LOWER_PERC < blue_cnt / lgt < BLUE_UPPER_PERC:
+                            bottom_margin = bot_check - 1
                             break
-                    if flag:
-                        break
 
-                for bot_check in range(1, int(hgt / 2)):
-                    blue_cnt = 0
-                    for x in range(lgt):
-                        y = hgt - bot_check
-                        if (
-                            frame[y, x][BLUE] >= BLUE_TH[BLUE]
-                            and frame[y, x][GREEN] >= BLUE_TH[GREEN]
-                            and frame[y, x][RED] <= BLUE_TH[RED]
-                        ):
-                            blue_cnt += 1
-                    if BLUE_LOWER_PERC < blue_cnt / lgt < BLUE_UPPER_PERC:
-                        bottom_margin = bot_check - 1
-                        break
-
-                for x in range(int(lgt / 2)):
-                    light_grey_cnt=0
-                    for y in range(hgt):
-                        if(frame[y,x][BLUE]>=LIGHT_GRAY_TH[BLUE] and frame[y,x][GREEN]>=LIGHT_GRAY_TH[GREEN] 
-                                and frame[y,x][RED]>=LIGHT_GRAY_TH[RED]):
-                            light_grey_cnt=light_grey_cnt+1
-                        y=y+1
-                    if LIGHT_GRAY_LOWER_PERC < light_grey_cnt/hgt < LIGHT_GRAY_UPPER_PERC:
-                        left_margin=x
-                        break
-                    x=x+1          
+                    # Vectorized left margin detection (light gray vertical area)
+                    left_half = frame[:, :int(lgt/2)]
+                    gray_mask = (
+                        (left_half[:, :, BLUE] >= LIGHT_GRAY_TH[BLUE]) &
+                        (left_half[:, :, GREEN] >= LIGHT_GRAY_TH[GREEN]) &
+                        (left_half[:, :, RED] >= LIGHT_GRAY_TH[RED])
+                    )
+                    gray_column_ratios = np.sum(gray_mask, axis=0) / hgt
+                    left_margin = MARGIN_TH
+                    for x in range(len(gray_column_ratios)):
+                        if LIGHT_GRAY_LOWER_PERC < gray_column_ratios[x] < LIGHT_GRAY_UPPER_PERC:
+                            left_margin = x
+                            break          
                         
 
                 if (
@@ -442,24 +477,31 @@ def cut_with_crop(mode, start_second, end_second, thread_num, measure_margin_sec
         if check_thread_num(thread_num):
             if check_start_end_seconds(start_second, end_second):
                 if measure_margin(measure_margin_second):
-                    if crop(                    
-                        e_top_margin.get(),
-                        e_bottom_margin.get(),
-                        e_left_margin.get(),
-                        e_right_margin.get(),
+                    # Cache margin values before crop (performance optimization)
+                    cached_top = e_top_margin.get()
+                    cached_bottom = e_bottom_margin.get()
+                    cached_left = e_left_margin.get()
+                    cached_right = e_right_margin.get()
+
+                    if crop(
+                        cached_top,
+                        cached_bottom,
+                        cached_left,
+                        cached_right,
                     ):
-                        if measure_margin(measure_margin_second):
-                            cut_without_crop(
-                                mode,  
-                                e_top_margin.get(),
-                                e_bottom_margin.get(),
-                                e_left_margin.get(),
-                                e_right_margin.get(),
-                                start_second,
-                                end_second,
-                                thread_num,
-                                ignore_frame_cnt
-                            )
+                        # Restore cached margin values instead of calling measure_margin again
+                        set_margin(cached_top, cached_bottom, cached_left, cached_right)
+                        cut_without_crop(
+                            mode,
+                            cached_top,
+                            cached_bottom,
+                            cached_left,
+                            cached_right,
+                            start_second,
+                            end_second,
+                            thread_num,
+                            ignore_frame_cnt
+                        )
 
 def crop(top_margin, bottom_margin, left_margin, right_margin):
     video_path = check_file_and_return_path()
@@ -490,9 +532,9 @@ def crop(top_margin, bottom_margin, left_margin, right_margin):
                 tc.time_start(t("log_timing_cropping"))
 
                 subprocess.call('ffmpeg -loglevel quiet -i "'
-                    + video_path + '" -b:v 0 -vf crop=' 
+                    + video_path + '" -b:v 0 -vf crop='
                     + W + ':' + H + ':' + X + ':' + Y + ' '+out,shell = True)
-                os.rename(video_path, "./" + orig_name)
+                # Original file stays in working_folder (not moved or deleted)
                 logger.info(t("log_crop_complete"))
 
                 tc.time_end()
@@ -519,43 +561,41 @@ def show_desc():
 def save_settings(mode_i, top_margin, bottom_margin, left_margin, right_margin, thread_num, ignore_frame_cnt):
     if check_thread_num(thread_num):
         if check_margin(top_margin, bottom_margin, left_margin, right_margin):
-            f = open(path + "/设置.txt", "w+")  # Settings
-            f.write(str(mode_i) + "\n")
-            f.write(top_margin + "\n")
-            f.write(bottom_margin + "\n")
-            f.write(left_margin + "\n")
-            f.write(right_margin + "\n")
-            f.write(thread_num + "\n")
-            f.write(ignore_frame_cnt + "\n")
-            f.write(str(current_language) + "\n")  # Save language preference
-            f.close()
+            with open(path + "/设置.txt", "w+") as f:  # Settings
+                f.write(str(mode_i) + "\n")
+                f.write(top_margin + "\n")
+                f.write(bottom_margin + "\n")
+                f.write(left_margin + "\n")
+                f.write(right_margin + "\n")
+                f.write(thread_num + "\n")
+                f.write(ignore_frame_cnt + "\n")
+                f.write(str(current_language) + "\n")  # Save language preference
             messagebox.showinfo(title=t("info_title"), message=t("settings_saved"))
 
 def manual_set_save():
     if check_coordinates_setting():
-        f = open(path + "/检测点.txt", "w+")  # Save detection points
-        f.write(str(array_1[0][0]) + "\n")
-        f.write(str(array_1[0][1]) + "\n")
-        f.write(str(array_1[1][0]) + "\n")
-        f.write(str(array_1[1][1]) + "\n")
-        f.write(str(array_1[2][0]) + "\n")
-        f.write(str(array_1[2][1]) + "\n")
-        f.write(str(array_1[3][0]) + "\n")
-        f.write(str(array_1[3][1]) + "\n")
-        f.write(str(array_2[0][0]) + "\n")
-        f.write(str(array_2[0][1]) + "\n")
-        f.write(str(array_2[1][0]) + "\n")
-        f.write(str(array_2[1][1]) + "\n")
-        f.write(str(array_2[2][0]) + "\n")
-        f.write(str(array_2[2][1]) + "\n")
-        f.write(str(array_2[3][0]) + "\n")
-        f.write(str(array_2[3][1]) + "\n")
-        f.write(str(array_2[4][0]) + "\n")
-        f.write(str(array_2[4][1]) + "\n")
-        f.write(str(array_2[5][1]) + "\n")
-        f.write(str(array_2[6][1]) + "\n")
-        f.write(str(array_2[7][1]) + "\n")
-        f.close()
+        with open(path + "/检测点.txt", "w+") as f:  # Save detection points
+            f.write(str(array_1[0][0]) + "\n")
+            f.write(str(array_1[0][1]) + "\n")
+            f.write(str(array_1[1][0]) + "\n")
+            f.write(str(array_1[1][1]) + "\n")
+            f.write(str(array_1[2][0]) + "\n")
+            f.write(str(array_1[2][1]) + "\n")
+            f.write(str(array_1[3][0]) + "\n")
+            f.write(str(array_1[3][1]) + "\n")
+            f.write(str(array_2[0][0]) + "\n")
+            f.write(str(array_2[0][1]) + "\n")
+            f.write(str(array_2[1][0]) + "\n")
+            f.write(str(array_2[1][1]) + "\n")
+            f.write(str(array_2[2][0]) + "\n")
+            f.write(str(array_2[2][1]) + "\n")
+            f.write(str(array_2[3][0]) + "\n")
+            f.write(str(array_2[3][1]) + "\n")
+            f.write(str(array_2[4][0]) + "\n")
+            f.write(str(array_2[4][1]) + "\n")
+            f.write(str(array_2[5][1]) + "\n")
+            f.write(str(array_2[6][1]) + "\n")
+            f.write(str(array_2[7][1]) + "\n")
         messagebox.showinfo(title=t("info_title"), message=t("detection_points_saved"))
 
 def cut_without_crop(
@@ -923,14 +963,20 @@ def get_file_suffix(vp_value, pause_value):
 
 def cleanup(working_path):
     tc = TimeCost()
-    tc.time_start(t("log_timing_cleaning_segments"))    
+    tc.time_start(t("log_timing_cleaning_segments"))
     for root, dirs, files in os.walk(working_path):
         for name in files:
             full_file_path = os.path.join(root, name)
             if name.startswith(TEMP_PREFIX):
                 os.remove(full_file_path)
-            elif get_frame_cnt(full_file_path) <= int(e_ignore_frame_cnt.get()) and os.path.splitext(full_file_path)[-1].split(".")[1] == 'mp4':
+                # Remove from cache if present
+                if full_file_path in _video_metadata_cache:
+                    del _video_metadata_cache[full_file_path]
+            elif get_frame_cnt(full_file_path) <= int(e_ignore_frame_cnt.get()) and full_file_path.lower().endswith('.mp4'):
                 os.remove(full_file_path)
+                # Remove from cache if present
+                if full_file_path in _video_metadata_cache:
+                    del _video_metadata_cache[full_file_path]
                 logger.info(t("log_segment_deleted").format(name))
     tc.time_end()
 
@@ -1162,6 +1208,7 @@ def lazy_version(
         tc.time_start(t("log_timing_generating_video"))
 
         threads = []
+        f = open(working_path + TEMP_FILENAME, "w")
 
         for thread_idx in range(thread_num):
             cap_t = cv2.VideoCapture(video_path)
@@ -1176,7 +1223,6 @@ def lazy_version(
             threads.append(thread)
             thread.start()
 
-            f = open(working_path + TEMP_FILENAME, "a")
             f.write("file " + TEMP_PREFIX + str(thread_idx) + ".mp4" + "\n")
 
         f.close()
@@ -1190,6 +1236,7 @@ def lazy_version(
         tc.time_start(t("log_timing_generating_video"))
 
         threads = []
+        f = open(working_path + TEMP_FILENAME, "w")
 
         for thread_idx in range(thread_num):
             cap_t = cv2.VideoCapture(video_path)
@@ -1204,7 +1251,6 @@ def lazy_version(
             threads.append(thread)
             thread.start()
 
-            f = open(working_path + TEMP_FILENAME, "a")
             f.write("file " + TEMP_PREFIX + str(thread_idx) + ".mp4" + "\n")
 
         f.close()
@@ -1517,7 +1563,7 @@ def normal_version(
     has_sound = True
     try:
         sound = AudioSegment.from_file(
-            video_path, format=os.path.splitext(video_path)[-1].split(".")[1]
+            video_path, format=os.path.splitext(video_path)[1].lstrip('.')
         )
     except:
         has_sound = False
@@ -1820,21 +1866,20 @@ l_valid_pause.grid(row=15, column=2)
 
 
 if os.path.exists(path + "/设置.txt"):
-    f = open(path + "/设置.txt")
-    e_mode.current(int(f.readline()))
-    set_margin(
-        int(f.readline()), int(f.readline()), int(f.readline()), int(f.readline())
-    )
-    set_thread_num(int(f.readline()))
-    set_ignore_frame_cnt(int(f.readline()))
-    # Read language preference (new field)
-    lang_line = f.readline().strip()
-    if lang_line:
-        set_language(lang_line)  # Use i18n function
-        current_language = get_current_language()
-        e_language.current(0 if current_language == "cn" else 1)
-        update_all_text()
-    f.close()
+    with open(path + "/设置.txt") as f:
+        e_mode.current(int(f.readline()))
+        set_margin(
+            int(f.readline()), int(f.readline()), int(f.readline()), int(f.readline())
+        )
+        set_thread_num(int(f.readline()))
+        set_ignore_frame_cnt(int(f.readline()))
+        # Read language preference
+        lang_line = f.readline().strip()
+        if lang_line:
+            set_language(lang_line)  # Use i18n function
+            current_language = get_current_language()
+            e_language.current(0 if current_language == "cn" else 1)
+            update_all_text()
 
 set_coordinates()
 
