@@ -26,6 +26,12 @@ THEMES = {
     }
 }
 
+# Font constants
+FONT_NORMAL = ("TkDefaultFont", 10)
+FONT_LABEL = ("TkDefaultFont", 10)
+FONT_BUTTON = ("TkDefaultFont", 10)
+FONT_LINK = ("TkDefaultFont", 10, "underline")
+
 
 class MainWindow:
     def __init__(self, root, working_path, default_language="cn"):
@@ -35,8 +41,8 @@ class MainWindow:
         self.theme_mode = "auto"  # "auto", "light", or "dark"
         self.description_labels = []  # Store description label references
 
-        # Configure responsive grid
-        self._setup_grid_config()
+        # Configure root window for pack layout
+        self._setup_layout_config()
 
         # Create all widgets
         self._create_widgets()
@@ -44,15 +50,10 @@ class MainWindow:
         # Apply initial theme
         self.apply_theme()
 
-    def _setup_grid_config(self):
-        """Configure column and row weights for responsive layout"""
-        # Columns: 0=label, 1=input(expand), 2=label, 3=control, 4=control, 5=theme
-        self.root.columnconfigure(0, weight=0)
-        self.root.columnconfigure(1, weight=1)
-        self.root.columnconfigure(2, weight=0)
-        self.root.columnconfigure(3, weight=0)
-        self.root.columnconfigure(4, weight=0)
-        self.root.columnconfigure(5, weight=0)
+    def _setup_layout_config(self):
+        """Configure root window for vertical pack layout"""
+        # Root will use pack layout - no columnconfigure needed
+        pass
 
     def get_effective_theme(self):
         """Get the actual theme to apply (resolves 'auto')"""
@@ -109,43 +110,81 @@ class MainWindow:
         """Create all UI widgets"""
         # Window setup
         self.root.title(t("window_title"))
-        # dynamic width based on path length
-        width = 1300 + len(self.working_path.encode("utf-8")) * 5
-        self.root.geometry(f"{width}x900")
+        self.root.geometry("900x700")
+        self.root.minsize(800, 600)
 
         # Set default combobox listbox font
-        self.root.option_add("*TCombobox*Listbox.font", 20)
+        self.root.option_add("*TCombobox*Listbox.font", FONT_NORMAL)
 
-        # ===== ROW 0: Working Path + Language + Theme =====
+        # Create main container for centered content
+        self.main_container = tk.Frame(self.root)
+        self.main_container.pack(expand=True, fill="both", padx=20, pady=20)
+
+        # ===== HEADER SECTION =====
+        self._create_header_section()
+
+        # ===== MODE SECTION =====
+        self._create_mode_section()
+
+        # ===== TWO COLUMN SECTION (Margin + Processing) =====
+        self._create_two_column_section()
+
+        # ===== CROP ACTIONS SECTION =====
+        self._create_crop_section()
+
+        # ===== PROCESS ACTIONS SECTION =====
+        self._create_process_section()
+
+        # ===== TUTORIAL SECTION =====
+        self._create_tutorial_section()
+
+        # ===== MANUAL DETECTION SECTION (HIDDEN - widgets created but not displayed) =====
+        # Still create the widgets for compatibility, but don't display them
+        self._create_manual_detection_hidden()
+
+    def _create_header_section(self):
+        """Create header section with working path, language, and theme"""
+        header_frame = ttk.Frame(self.main_container)
+        header_frame.pack(fill="x", expand=False, padx=5, pady=5)
+
+        # Working path row
         self.l_text_working_path = tk.Label(
-            self.root, text=t("current_working_dir"), font=20, height=3
+            header_frame, text=t("current_working_dir"), font=FONT_LABEL
         )
         self.l_working_path = tk.Label(
-            self.root, text=self.working_path, bg="lightgray", font=20, height=3
+            header_frame, text=self.working_path, font=FONT_LABEL
         )
 
-        self.l_language = tk.Label(self.root, text=t("language"), font=20, height=2)
-        self.e_language = ttk.Combobox(self.root, values=["中文", "English"], font=20, width=10)
+        self.l_text_working_path.grid(row=0, column=0, sticky="e", padx=10, pady=5)
+        self.l_working_path.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+
+        # Language and theme row
+        self.l_language = tk.Label(header_frame, text=t("language"), font=FONT_LABEL)
+        self.e_language = ttk.Combobox(header_frame, values=["中文", "English"], font=FONT_NORMAL, width=10)
         self.e_language.current(0 if self.default_language == "cn" else 1)
 
-        self.l_theme = tk.Label(self.root, text=t("theme"), font=20, height=2)
+        self.l_theme = tk.Label(header_frame, text=t("theme"), font=FONT_LABEL)
         self.e_theme = ttk.Combobox(
-            self.root, values=[t("auto"), t("light"), t("dark")], font=20, width=10
+            header_frame, values=[t("auto"), t("light"), t("dark")], font=FONT_NORMAL, width=10
         )
         self.e_theme.current(0)
         self.e_theme.bind("<<ComboboxSelected>>", self.change_theme)
 
-        # Grid row 0
-        self.l_text_working_path.grid(row=0, column=0, sticky="e", padx=10, pady=5)
-        self.l_working_path.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
-        self.l_language.grid(row=0, column=2, sticky="e", padx=10, pady=5)
-        self.e_language.grid(row=0, column=3, sticky="w", padx=5, pady=5)
-        self.l_theme.grid(row=0, column=4, sticky="e", padx=10, pady=5)
-        self.e_theme.grid(row=0, column=5, sticky="w", padx=5, pady=5)
+        self.l_language.grid(row=1, column=0, sticky="e", padx=10, pady=5)
+        self.e_language.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        self.l_theme.grid(row=1, column=2, sticky="e", padx=10, pady=5)
+        self.e_theme.grid(row=1, column=3, sticky="w", padx=5, pady=5)
 
-        # ===== ROW 1: Mode + Show Description =====
-        self.l_mode = tk.Label(self.root, text=t("select_mode"), font=20, height=3)
-        self.e_mode = ttk.Combobox(self.root, font=20, height=4, width=28)
+        header_frame.columnconfigure(1, weight=1)
+
+    def _create_mode_section(self):
+        """Create mode selection section"""
+        self.mode_frame = ttk.LabelFrame(self.main_container, text=t("select_mode"))
+        self.mode_frame.pack(fill="x", expand=False, padx=5, pady=5)
+
+        # Mode dropdown and show description button
+        self.l_mode = tk.Label(self.mode_frame, text=t("select_mode"), font=FONT_LABEL)
+        self.e_mode = ttk.Combobox(self.mode_frame, font=FONT_NORMAL, width=35)
         self.e_mode["value"] = (
             t("mode_normal_audio_only"),
             t("mode_normal_keep_video"),
@@ -153,148 +192,193 @@ class MainWindow:
             t("mode_lazy_cut_all")
         )
         self.e_mode.current(1)
-        self.b_show_desc = tk.Button(self.root, text=t("show_desc"), font=20)
+        self.b_show_desc = tk.Button(self.mode_frame, text=t("show_desc"), font=FONT_BUTTON)
 
-        self.l_mode.grid(row=1, column=0, sticky="e", padx=10, pady=5)
-        self.e_mode.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
-        self.b_show_desc.grid(row=1, column=2, columnspan=4, sticky="ew", padx=10, pady=5)
+        self.l_mode.grid(row=0, column=0, sticky="e", padx=10, pady=5)
+        self.e_mode.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        self.b_show_desc.grid(row=0, column=2, sticky="ew", padx=10, pady=5)
 
-        # ===== ROWS 4-7: Margin Inputs (left column) =====
-        self.l_top_margin = tk.Label(self.root, text=t("top_margin"), font=20, height=2)
-        self.e_top_margin = tk.Entry(self.root, bg="white", font=20)
+        # Description labels container (rows 1-3)
+        self._create_description_labels()
 
-        self.l_bottom_margin = tk.Label(self.root, text=t("bottom_margin"), font=20, height=2)
-        self.e_bottom_margin = tk.Entry(self.root, bg="white", font=20)
+        self.mode_frame.columnconfigure(1, weight=1)
 
-        self.l_left_margin = tk.Label(self.root, text=t("left_margin"), font=20, height=2)
-        self.e_left_margin = tk.Entry(self.root, bg="white", font=20)
+    def _create_description_labels(self):
+        """Create mode description labels (initially empty)"""
+        # Labels will be dynamically created/updated by show_description_labels()
+        # Reserve space for 3 description lines
+        for i in range(3):
+            lbl = tk.Label(self.mode_frame, text="", font=FONT_LABEL, justify="left")
+            lbl.grid(row=1 + i, column=0, columnspan=3, sticky="w", padx=10, pady=2)
+            lbl.grid_remove()  # Initially hidden
+            self.description_labels.append(lbl)
 
-        self.l_right_margin = tk.Label(self.root, text=t("right_margin"), font=20, height=2)
-        self.e_right_margin = tk.Entry(self.root, bg="white", font=20)
+    def _create_two_column_section(self):
+        """Create two-column section with margin and processing settings"""
+        two_col_container = tk.Frame(self.main_container)
+        two_col_container.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Grid margin inputs
-        self.l_top_margin.grid(row=4, column=0, sticky="e", padx=10, pady=3)
-        self.e_top_margin.grid(row=4, column=1, sticky="ew", padx=5, pady=3)
-        self.l_bottom_margin.grid(row=5, column=0, sticky="e", padx=10, pady=3)
-        self.e_bottom_margin.grid(row=5, column=1, sticky="ew", padx=5, pady=3)
-        self.l_left_margin.grid(row=6, column=0, sticky="e", padx=10, pady=3)
-        self.e_left_margin.grid(row=6, column=1, sticky="ew", padx=5, pady=3)
-        self.l_right_margin.grid(row=7, column=0, sticky="e", padx=10, pady=3)
-        self.e_right_margin.grid(row=7, column=1, sticky="ew", padx=5, pady=3)
+        # Left column - Margin Section
+        margin_frame = self._create_margin_section(two_col_container)
+        margin_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
-        # ===== ROWS 4-7: Manual Detection Panel (right columns) =====
-        self.l_manual_set_or_not = tk.Label(self.root, text=t("manual_set_or_not"), font=20, height=3)
+        # Right column - Processing Section
+        processing_frame = self._create_processing_section(two_col_container)
+        processing_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+
+        # Equal column weights
+        two_col_container.columnconfigure(0, weight=1)
+        two_col_container.columnconfigure(1, weight=1)
+
+    def _create_manual_detection_hidden(self):
+        """Create manual detection widgets but don't display them (for compatibility)"""
+        # Create a hidden frame as parent
+        hidden_frame = tk.Frame(self.root)
+        # Don't pack or grid the frame - widgets exist but aren't visible
+
+        # Mode selector
+        self.l_manual_set_or_not = tk.Label(hidden_frame, text=t("manual_set_or_not"), font=FONT_LABEL)
         self.e_manual_set_or_not = ttk.Combobox(
-            self.root, values=(t("no"), t("yes")), font=20, height=4, width=10
+            hidden_frame, values=(t("no"), t("yes")), font=FONT_NORMAL, width=10
         )
         self.e_manual_set_or_not.current(0)
 
-        self.l_manual_set_second = tk.Label(self.root, text=t("manual_set_second"), font=20, height=2)
-        self.e_manual_set_second_1 = tk.Entry(self.root, bg="white", font=20, width=10)
-        self.e_manual_set_second_2 = tk.Entry(self.root, bg="white", font=20, width=10)
+        # Second inputs
+        self.l_manual_set_second = tk.Label(hidden_frame, text=t("manual_set_second"), font=FONT_LABEL)
+        self.e_manual_set_second_1 = tk.Entry(hidden_frame, font=FONT_NORMAL, width=10)
+        self.e_manual_set_second_2 = tk.Entry(hidden_frame, font=FONT_NORMAL, width=10)
 
-        self.b_manual_set = tk.Button(self.root, text=t("manual_set"), font=20)
-        self.b_manual_set_sample = tk.Button(self.root, text=t("sample_images"), font=20)
-        self.b_manual_set_save = tk.Button(self.root, text=t("save_detection_points"), font=20)
+        # Action buttons
+        self.b_manual_set = tk.Button(hidden_frame, text=t("manual_set"), font=FONT_BUTTON)
+        self.b_manual_set_sample = tk.Button(hidden_frame, text=t("sample_images"), font=FONT_BUTTON)
+        self.b_manual_set_save = tk.Button(hidden_frame, text=t("save_detection_points"), font=FONT_BUTTON)
 
         # Coordinate display labels
-        self.l_acc_right = tk.Label(self.root, text="y,x", font=20, height=2)
-        self.l_acc_left = tk.Label(self.root, text="y,x", font=20, height=2)
+        self._create_coordinate_labels_hidden(hidden_frame)
 
-        self.l_frame_desc = tk.Label(self.root, text=t("refer_sample"), font=20, height=2)
-        self.l_frame_1_desc = tk.Label(self.root, text=t("frame_1_desc"), font=20, height=2)
-        self.l_frame_2_desc = tk.Label(self.root, text=t("frame_2_desc"), font=20, height=2)
+        # Frame references
+        self.l_frame_desc = tk.Label(hidden_frame, text=t("refer_sample"), font=FONT_LABEL)
+        self.l_frame_1_desc = tk.Label(hidden_frame, text=t("frame_1_desc"), font=FONT_LABEL)
+        self.l_frame_2_desc = tk.Label(hidden_frame, text=t("frame_2_desc"), font=FONT_LABEL)
 
-        self.l_pause_middle = tk.Label(self.root, text="y,x", font=20, height=2)
-        self.l_pause_left = tk.Label(self.root, text="y,x", font=20, height=2)
+    def _create_coordinate_labels_hidden(self, parent):
+        """Create coordinate display labels for detection points (hidden)"""
+        self.l_acc_right = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.l_acc_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.l_pause_middle = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.l_pause_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.l_middle_pause_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.l_middle_pause_middle_2 = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.l_middle_pause_middle = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.l_middle_pause_right = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.l_valid_pause = tk.Label(parent, text="y,x1,x2,x3,x4", font=FONT_LABEL)
 
-        self.l_middle_pause_left = tk.Label(self.root, text="y,x", font=20, height=2)
-        self.l_middle_pause_middle_2 = tk.Label(self.root, text="y,x", font=20, height=2)
-        self.l_middle_pause_middle = tk.Label(self.root, text="y,x", font=20, height=2)
-        self.l_middle_pause_right = tk.Label(self.root, text="y,x", font=20, height=2)
+    def _create_margin_section(self, parent):
+        """Create margin settings section"""
+        margin_frame = ttk.LabelFrame(parent, text=t("margin_section"))
 
-        self.l_valid_pause = tk.Label(self.root, text="y,x1,x2,x3,x4", font=20, height=2)
+        self.l_top_margin = tk.Label(margin_frame, text=t("top_margin"), font=FONT_LABEL)
+        self.e_top_margin = tk.Entry(margin_frame, font=FONT_NORMAL)
 
-        # Grid manual detection (rows 4-15, columns 2-4)
-        self.l_manual_set_or_not.grid(row=4, column=2, sticky="e", padx=10, pady=3)
-        self.e_manual_set_or_not.grid(row=4, column=3, sticky="w", padx=5, pady=3)
-        self.l_manual_set_second.grid(row=5, column=2, sticky="e", padx=10, pady=3)
-        self.e_manual_set_second_1.grid(row=5, column=3, sticky="w", padx=5, pady=3)
-        self.e_manual_set_second_2.grid(row=5, column=4, sticky="w", padx=5, pady=3)
-        self.b_manual_set.grid(row=6, column=2, sticky="ew", padx=5, pady=3)
-        self.b_manual_set_sample.grid(row=6, column=3, sticky="ew", padx=5, pady=3)
-        self.b_manual_set_save.grid(row=6, column=4, sticky="ew", padx=5, pady=3)
-        self.l_acc_right.grid(row=7, column=2, sticky="w", padx=5, pady=3)
-        self.l_acc_left.grid(row=8, column=2, sticky="w", padx=5, pady=3)
-        self.l_frame_desc.grid(row=7, column=3, columnspan=2, sticky="w", padx=5, pady=3)
-        self.l_frame_1_desc.grid(row=8, column=3, columnspan=2, sticky="w", padx=5, pady=3)
-        self.l_frame_2_desc.grid(row=9, column=3, columnspan=2, sticky="w", padx=5, pady=3)
-        self.l_pause_middle.grid(row=9, column=2, sticky="w", padx=5, pady=3)
-        self.l_pause_left.grid(row=10, column=2, sticky="w", padx=5, pady=3)
-        self.l_middle_pause_left.grid(row=11, column=2, sticky="w", padx=5, pady=3)
-        self.l_middle_pause_middle_2.grid(row=12, column=2, sticky="w", padx=5, pady=3)
-        self.l_middle_pause_middle.grid(row=13, column=2, sticky="w", padx=5, pady=3)
-        self.l_middle_pause_right.grid(row=14, column=2, sticky="w", padx=5, pady=3)
-        self.l_valid_pause.grid(row=15, column=2, sticky="w", padx=5, pady=3)
+        self.l_bottom_margin = tk.Label(margin_frame, text=t("bottom_margin"), font=FONT_LABEL)
+        self.e_bottom_margin = tk.Entry(margin_frame, font=FONT_NORMAL)
 
-        # ===== ROWS 8-9: Thread/Ignore inputs =====
-        self.l_thread_num = tk.Label(self.root, text=t("thread_num"), font=20, height=2)
-        self.e_thread_num = tk.Entry(self.root, bg="white", font=20)
+        self.l_left_margin = tk.Label(margin_frame, text=t("left_margin"), font=FONT_LABEL)
+        self.e_left_margin = tk.Entry(margin_frame, font=FONT_NORMAL)
 
-        self.l_ignore_frame_cnt = tk.Label(self.root, text=t("ignore_frame_cnt"), font=20, height=2)
-        self.e_ignore_frame_cnt = tk.Entry(self.root, bg="white", font=20)
+        self.l_right_margin = tk.Label(margin_frame, text=t("right_margin"), font=FONT_LABEL)
+        self.e_right_margin = tk.Entry(margin_frame, font=FONT_NORMAL)
 
-        self.l_thread_num.grid(row=8, column=0, sticky="e", padx=10, pady=3)
-        self.e_thread_num.grid(row=8, column=1, sticky="ew", padx=5, pady=3)
-        self.l_ignore_frame_cnt.grid(row=9, column=0, sticky="e", padx=10, pady=3)
-        self.e_ignore_frame_cnt.grid(row=9, column=1, sticky="ew", padx=5, pady=3)
+        # 2x4 grid layout
+        self.l_top_margin.grid(row=0, column=0, sticky="e", padx=10, pady=3)
+        self.e_top_margin.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+        self.l_bottom_margin.grid(row=1, column=0, sticky="e", padx=10, pady=3)
+        self.e_bottom_margin.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+        self.l_left_margin.grid(row=2, column=0, sticky="e", padx=10, pady=3)
+        self.e_left_margin.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+        self.l_right_margin.grid(row=3, column=0, sticky="e", padx=10, pady=3)
+        self.e_right_margin.grid(row=3, column=1, sticky="ew", padx=5, pady=3)
 
-        # ===== ROW 10: Save Settings button =====
-        self.b_save_settings = tk.Button(self.root, text=t("save_settings"), font=20)
-        self.b_save_settings.grid(row=10, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+        margin_frame.columnconfigure(1, weight=1)
+        return margin_frame
 
-        # ===== ROWS 11-12: Measure/Cut controls =====
-        self.l_measure_margin_second = tk.Label(self.root, text=t("measure_margin_second"), font=20, height=2)
-        self.e_measure_margin_second = tk.Entry(self.root, bg="white", font=20)
+    def _create_processing_section(self, parent):
+        """Create processing settings section"""
+        processing_frame = ttk.LabelFrame(parent, text=t("processing_settings"))
 
-        self.b_measure_margin = tk.Button(self.root, text=t("measure_margin"), font=20)
-        self.b_crop = tk.Button(self.root, text=t("crop_btn"), font=20)
+        self.l_thread_num = tk.Label(processing_frame, text=t("thread_num"), font=FONT_LABEL)
+        self.e_thread_num = tk.Entry(processing_frame, font=FONT_NORMAL)
 
-        self.l_measure_margin_second.grid(row=11, column=0, sticky="e", padx=10, pady=3)
-        self.e_measure_margin_second.grid(row=11, column=1, sticky="ew", padx=5, pady=3)
-        self.b_measure_margin.grid(row=12, column=0, sticky="ew", padx=5, pady=3)
-        self.b_crop.grid(row=12, column=1, sticky="ew", padx=5, pady=3)
+        self.l_ignore_frame_cnt = tk.Label(processing_frame, text=t("ignore_frame_cnt"), font=FONT_LABEL)
+        self.e_ignore_frame_cnt = tk.Entry(processing_frame, font=FONT_NORMAL)
 
-        # ===== ROWS 13-14: Start/End seconds =====
-        self.l_start_second = tk.Label(self.root, text=t("start_second"), font=20, height=2)
-        self.e_start_second = tk.Entry(self.root, bg="white", font=20)
+        self.l_thread_num.grid(row=0, column=0, sticky="e", padx=10, pady=3)
+        self.e_thread_num.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+        self.l_ignore_frame_cnt.grid(row=1, column=0, sticky="e", padx=10, pady=3)
+        self.e_ignore_frame_cnt.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
 
-        self.l_end_second = tk.Label(self.root, text=t("end_second"), font=20, height=2)
-        self.e_end_second = tk.Entry(self.root, bg="white", font=20)
+        self.b_save_settings = tk.Button(processing_frame, text=t("save_settings"), font=FONT_BUTTON)
+        self.b_save_settings.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
 
-        self.l_start_second.grid(row=13, column=0, sticky="e", padx=10, pady=3)
-        self.e_start_second.grid(row=13, column=1, sticky="ew", padx=5, pady=3)
-        self.l_end_second.grid(row=14, column=0, sticky="e", padx=10, pady=3)
-        self.e_end_second.grid(row=14, column=1, sticky="ew", padx=5, pady=3)
+        processing_frame.columnconfigure(1, weight=1)
+        return processing_frame
 
-        # ===== ROW 15: Action buttons =====
-        self.b_cut_without_crop = tk.Button(self.root, text=t("start_without_crop"), font=20)
-        self.b_cut_with_crop = tk.Button(self.root, text=t("start_with_crop"), font=20)
+    def _create_crop_section(self):
+        """Create crop actions section"""
+        crop_frame = ttk.LabelFrame(self.main_container, text=t("crop_actions"))
+        crop_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
-        self.b_cut_without_crop.grid(row=15, column=0, sticky="ew", padx=5, pady=3)
-        self.b_cut_with_crop.grid(row=15, column=1, sticky="ew", padx=5, pady=3)
+        self.l_measure_margin_second = tk.Label(crop_frame, text=t("measure_margin_second"), font=FONT_LABEL)
+        self.e_measure_margin_second = tk.Entry(crop_frame, font=FONT_NORMAL)
 
-        # ===== ROW 16: Tutorial links =====
-        self.l_tutorial = tk.Label(self.root, text=t("tutorial"), font=20, height=2)
+        self.b_measure_margin = tk.Button(crop_frame, text=t("measure_margin"), font=FONT_BUTTON)
+        self.b_crop = tk.Button(crop_frame, text=t("crop_btn"), font=FONT_BUTTON)
 
-        import tkinter.font as tkFont
-        ft = tkFont.Font(family="Fixdsys", size=11, weight=tkFont.NORMAL, underline=1)
+        self.l_measure_margin_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
+        self.e_measure_margin_second.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+        self.b_measure_margin.grid(row=1, column=0, sticky="ew", padx=5, pady=3)
+        self.b_crop.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+
+        crop_frame.columnconfigure(1, weight=1)
+
+    def _create_process_section(self):
+        """Create process actions section"""
+        process_frame = ttk.LabelFrame(self.main_container, text=t("process_actions"))
+        process_frame.pack(fill="x", expand=False, padx=5, pady=5)
+
+        self.l_start_second = tk.Label(process_frame, text=t("start_second"), font=FONT_LABEL)
+        self.e_start_second = tk.Entry(process_frame, font=FONT_NORMAL)
+
+        self.l_end_second = tk.Label(process_frame, text=t("end_second"), font=FONT_LABEL)
+        self.e_end_second = tk.Entry(process_frame, font=FONT_NORMAL)
+
+        self.b_cut_without_crop = tk.Button(process_frame, text=t("start_without_crop"), font=FONT_BUTTON)
+        self.b_cut_with_crop = tk.Button(process_frame, text=t("start_with_crop"), font=FONT_BUTTON)
+
+        self.l_start_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
+        self.e_start_second.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+        self.l_end_second.grid(row=1, column=0, sticky="e", padx=10, pady=3)
+        self.e_end_second.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+        self.b_cut_without_crop.grid(row=2, column=0, sticky="ew", padx=5, pady=3)
+        self.b_cut_with_crop.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+
+        process_frame.columnconfigure(1, weight=1)
+
+    def _create_tutorial_section(self):
+        """Create tutorial section"""
+        tutorial_frame = ttk.Frame(self.main_container)
+        tutorial_frame.pack(fill="x", expand=False, padx=5, pady=5)
+
+        self.l_tutorial = tk.Label(tutorial_frame, text=t("tutorial"), font=FONT_LABEL)
         self.l_tutorial_url = tk.Label(
-            self.root, text="www.bilibili.com/video/BV1qg411r7dV", font=ft, fg="blue", height=2
+            tutorial_frame, text="www.bilibili.com/video/BV1qg411r7dV",
+            font=FONT_LINK, fg="blue"
         )
 
-        self.l_tutorial.grid(row=16, column=0, sticky="e", padx=10, pady=3)
-        self.l_tutorial_url.grid(row=16, column=1, sticky="w", padx=5, pady=3)
+        self.l_tutorial.grid(row=0, column=0, sticky="e", padx=10, pady=3)
+        self.l_tutorial_url.grid(row=0, column=1, sticky="w", padx=5, pady=3)
+
+        tutorial_frame.columnconfigure(1, weight=1)
 
     # ===== Widget update methods for callbacks =====
 
@@ -334,28 +418,20 @@ class MainWindow:
         self.l_valid_pause.config(text=valid_pause)
 
     def show_description_labels(self):
-        """Show mode description labels (rows 2-3)"""
-        # Clear existing description labels first
-        for lbl in self.description_labels:
-            lbl.grid_remove()
-        self.description_labels.clear()
-
-        # Create new description labels
+        """Show mode description labels in mode section"""
         mode_idx = self.e_mode.current()
         if mode_idx in [2, 3]:  # Lazy mode
-            self._add_desc_label(2, 0, 2, "lazy_mode_desc1")
-            self._add_desc_label(3, 0, 2, "lazy_mode_desc2")
-            self._add_desc_label(4, 0, 2, "lazy_mode_desc3")
+            self.description_labels[0].config(text=t("lazy_mode_desc1"))
+            self.description_labels[1].config(text=t("lazy_mode_desc2"))
+            self.description_labels[2].config(text=t("lazy_mode_desc3"))
         else:  # Normal mode
-            self._add_desc_label(2, 0, 2, "normal_mode_desc1")
-            self._add_desc_label(3, 0, 2, "normal_mode_desc2")
-            self._add_desc_label(4, 0, 2, "normal_mode_desc3")
+            self.description_labels[0].config(text=t("normal_mode_desc1"))
+            self.description_labels[1].config(text=t("normal_mode_desc2"))
+            self.description_labels[2].config(text=t("normal_mode_desc3"))
 
-    def _add_desc_label(self, row, col, colspan, text_key):
-        """Helper to add a description label"""
-        lbl = tk.Label(self.root, text=t(text_key), font=20)
-        lbl.grid(row=row, column=col, columnspan=colspan, sticky="w", padx=10, pady=2)
-        self.description_labels.append(lbl)
+        # Show all labels
+        for lbl in self.description_labels:
+            lbl.grid()
 
     def update_all_text(self):
         """Update all widget text when language changes"""
@@ -381,36 +457,37 @@ class MainWindow:
             "mode_lazy_cut_all"
         )
 
-        # Update margin labels
+        # Update margin labels and section title
+        self.mode_frame.config(text=t("select_mode"))
         self.l_top_margin.config(text=t("top_margin"))
         self.l_bottom_margin.config(text=t("bottom_margin"))
         self.l_left_margin.config(text=t("left_margin"))
         self.l_right_margin.config(text=t("right_margin"))
 
-        # Update thread/ignore labels
+        # Update thread/ignore labels and section title
         self.l_thread_num.config(text=t("thread_num"))
         self.l_ignore_frame_cnt.config(text=t("ignore_frame_cnt"))
 
         # Update button
         self.b_save_settings.config(text=t("save_settings"))
 
-        # Update measure/cut labels and buttons
+        # Update measure/cut labels and buttons and section title
         self.l_measure_margin_second.config(text=t("measure_margin_second"))
         self.b_measure_margin.config(text=t("measure_margin"))
         self.b_crop.config(text=t("crop_btn"))
 
-        # Update start/end labels
+        # Update start/end labels and section title
         self.l_start_second.config(text=t("start_second"))
         self.l_end_second.config(text=t("end_second"))
 
-        # Update action buttons
+        # Update action buttons and section title
         self.b_cut_without_crop.config(text=t("start_without_crop"))
         self.b_cut_with_crop.config(text=t("start_with_crop"))
 
         # Update tutorial
         self.l_tutorial.config(text=t("tutorial"))
 
-        # Update manual detection labels
+        # Update manual detection labels and section title
         self.l_manual_set_or_not.config(text=t("manual_set_or_not"))
         update_combobox_preserve_selection(self.e_manual_set_or_not, "no", "yes")
         self.l_manual_set_second.config(text=t("manual_set_second"))
@@ -420,3 +497,19 @@ class MainWindow:
         self.l_frame_desc.config(text=t("refer_sample"))
         self.l_frame_1_desc.config(text=t("frame_1_desc"))
         self.l_frame_2_desc.config(text=t("frame_2_desc"))
+
+        # Update section titles
+        # Need to get references to the section frames
+        for widget in self.root.winfo_children():
+            if isinstance(widget, ttk.LabelFrame):
+                title = widget.cget("text")
+                if title == t("margin_section") or title == "边距设置" or title == "Margin Settings":
+                    widget.config(text=t("margin_section"))
+                elif title == t("manual_detection") or title == "手动检测点" or title == "Manual Detection":
+                    widget.config(text=t("manual_detection"))
+                elif title == t("processing_settings") or title == "处理设置" or title == "Processing Settings":
+                    widget.config(text=t("processing_settings"))
+                elif title == t("crop_actions") or title == "裁剪操作" or title == "Crop Actions":
+                    widget.config(text=t("crop_actions"))
+                elif title == t("process_actions") or title == "处理操作" or title == "Process Actions":
+                    widget.config(text=t("process_actions"))
