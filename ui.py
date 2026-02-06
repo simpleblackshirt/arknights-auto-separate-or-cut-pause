@@ -18,10 +18,10 @@ THEMES = {
         "link_fg": "#0066cc",
     },
     "dark": {
-        "bg": "#2b2b2b",
-        "fg": "#ffffff",
-        "input_bg": "#3c3c3c",
-        "path_bg": "#404040",
+        "bg": "#1c1c1c",
+        "fg": "#cccccc",
+        "input_bg": "#2b2b2f",
+        "path_bg": "#252525",
         "link_fg": "#66b3ff",
     }
 }
@@ -29,6 +29,7 @@ THEMES = {
 # Font constants
 FONT_NORMAL = ("TkDefaultFont", 10)
 FONT_LABEL = ("TkDefaultFont", 10)
+FONT_FRAME = ("TkDefaultFont", 8)
 FONT_BUTTON = ("TkDefaultFont", 10)
 FONT_LINK = ("TkDefaultFont", 10, "underline")
 
@@ -40,6 +41,11 @@ class MainWindow:
         self.default_language = default_language
         self.theme_mode = "auto"  # "auto", "light", or "dark"
         self.description_labels = []  # Store description label references
+
+        # Track themeable widgets
+        self.themeable_labels = []  # All tk.Label widgets
+        self.themeable_buttons = []  # All tk.Button widgets
+        self.themeable_frames = []  # All Frame widgets
 
         # Configure root window for pack layout
         self._setup_layout_config()
@@ -71,6 +77,36 @@ class MainWindow:
         except Exception:
             pass  # Root window may not support bg on all platforms
 
+        # Update all themeable labels
+        for lbl in self.themeable_labels:
+            try:
+                lbl.configure(bg=theme["bg"], fg=theme["fg"])
+            except Exception:
+                pass
+
+        # Update all themeable buttons
+        for btn in self.themeable_buttons:
+            try:
+                btn.configure(
+                    bg=theme["bg"],
+                    fg=theme["fg"],
+                    activebackground=theme["input_bg"],
+                    highlightbackground="#cccccc",
+                    highlightcolor="#cccccc",
+                    highlightthickness=1,
+                    relief="solid",
+                    borderwidth=1
+                )
+            except Exception:
+                pass
+
+        # Update all themeable frames
+        for frame in self.themeable_frames:
+            try:
+                frame.configure(bg=theme["bg"])
+            except Exception:
+                pass
+
         # Update all Entry widgets with input_bg
         entry_widgets = [
             'e_top_margin', 'e_bottom_margin', 'e_left_margin', 'e_right_margin',
@@ -86,14 +122,14 @@ class MainWindow:
                 except Exception:
                     pass
 
-        # Update path label
+        # Update path label with special background
         if hasattr(self, 'l_working_path'):
             try:
                 self.l_working_path.configure(bg=theme["path_bg"], fg=theme["fg"])
             except Exception:
                 pass
 
-        # Update tutorial link
+        # Update tutorial link color
         if hasattr(self, 'l_tutorial_url'):
             try:
                 self.l_tutorial_url.configure(fg=theme["link_fg"])
@@ -116,8 +152,12 @@ class MainWindow:
         # Set default combobox listbox font
         self.root.option_add("*TCombobox*Listbox.font", FONT_NORMAL)
 
+        #Set default labelframe font
+        self.root.option_add("*LabelFrame.font", FONT_FRAME)
+
         # Create main container for centered content
         self.main_container = tk.Frame(self.root)
+        self.themeable_frames.append(self.main_container)
         self.main_container.pack(expand=True, fill="both", padx=20, pady=20)
 
         # ===== HEADER SECTION =====
@@ -144,26 +184,31 @@ class MainWindow:
 
     def _create_header_section(self):
         """Create header section with working path, language, and theme"""
-        header_frame = ttk.Frame(self.main_container)
+        header_frame = tk.Frame(self.main_container)
+        self.themeable_frames.append(header_frame)
         header_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
         # Working path row
         self.l_text_working_path = tk.Label(
             header_frame, text=t("current_working_dir"), font=FONT_LABEL
         )
+        self.themeable_labels.append(self.l_text_working_path)
         self.l_working_path = tk.Label(
             header_frame, text=self.working_path, font=FONT_LABEL
         )
+        self.themeable_labels.append(self.l_working_path)
 
         self.l_text_working_path.grid(row=0, column=0, sticky="e", padx=10, pady=5)
         self.l_working_path.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
         # Language and theme row
         self.l_language = tk.Label(header_frame, text=t("language"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_language)
         self.e_language = ttk.Combobox(header_frame, values=["中文", "English"], font=FONT_NORMAL, width=10)
         self.e_language.current(0 if self.default_language == "cn" else 1)
 
         self.l_theme = tk.Label(header_frame, text=t("theme"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_theme)
         self.e_theme = ttk.Combobox(
             header_frame, values=[t("auto"), t("light"), t("dark")], font=FONT_NORMAL, width=10
         )
@@ -179,11 +224,13 @@ class MainWindow:
 
     def _create_mode_section(self):
         """Create mode selection section"""
-        self.mode_frame = ttk.LabelFrame(self.main_container, text=t("select_mode"))
+        self.mode_frame = tk.LabelFrame(self.main_container, text=t("select_mode"), padx=5, pady=5)
+        self.themeable_labels.append(self.mode_frame)
         self.mode_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
         # Mode dropdown and show description button
         self.l_mode = tk.Label(self.mode_frame, text=t("select_mode"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_mode)
         self.e_mode = ttk.Combobox(self.mode_frame, font=FONT_NORMAL, width=35)
         self.e_mode["value"] = (
             t("mode_normal_audio_only"),
@@ -193,6 +240,7 @@ class MainWindow:
         )
         self.e_mode.current(1)
         self.b_show_desc = tk.Button(self.mode_frame, text=t("show_desc"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_show_desc)
 
         self.l_mode.grid(row=0, column=0, sticky="e", padx=10, pady=5)
         self.e_mode.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
@@ -209,6 +257,7 @@ class MainWindow:
         # Reserve space for 3 description lines
         for i in range(3):
             lbl = tk.Label(self.mode_frame, text="", font=FONT_LABEL, justify="left")
+            self.themeable_labels.append(lbl)
             lbl.grid(row=1 + i, column=0, columnspan=3, sticky="w", padx=10, pady=2)
             lbl.grid_remove()  # Initially hidden
             self.description_labels.append(lbl)
@@ -216,15 +265,16 @@ class MainWindow:
     def _create_two_column_section(self):
         """Create two-column section with margin and processing settings"""
         two_col_container = tk.Frame(self.main_container)
+        self.themeable_frames.append(two_col_container)
         two_col_container.pack(fill="both", expand=True, padx=5, pady=5)
 
         # Left column - Margin Section
-        margin_frame = self._create_margin_section(two_col_container)
-        margin_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.margin_frame = self._create_margin_section(two_col_container)
+        self.margin_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         # Right column - Processing Section
-        processing_frame = self._create_processing_section(two_col_container)
-        processing_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        self.processing_frame = self._create_processing_section(two_col_container)
+        self.processing_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
 
         # Equal column weights
         two_col_container.columnconfigure(0, weight=1)
@@ -238,6 +288,7 @@ class MainWindow:
 
         # Mode selector
         self.l_manual_set_or_not = tk.Label(hidden_frame, text=t("manual_set_or_not"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_manual_set_or_not)
         self.e_manual_set_or_not = ttk.Combobox(
             hidden_frame, values=(t("no"), t("yes")), font=FONT_NORMAL, width=10
         )
@@ -245,48 +296,69 @@ class MainWindow:
 
         # Second inputs
         self.l_manual_set_second = tk.Label(hidden_frame, text=t("manual_set_second"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_manual_set_second)
         self.e_manual_set_second_1 = tk.Entry(hidden_frame, font=FONT_NORMAL, width=10)
         self.e_manual_set_second_2 = tk.Entry(hidden_frame, font=FONT_NORMAL, width=10)
 
         # Action buttons
         self.b_manual_set = tk.Button(hidden_frame, text=t("manual_set"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_manual_set)
         self.b_manual_set_sample = tk.Button(hidden_frame, text=t("sample_images"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_manual_set_sample)
         self.b_manual_set_save = tk.Button(hidden_frame, text=t("save_detection_points"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_manual_set_save)
 
         # Coordinate display labels
         self._create_coordinate_labels_hidden(hidden_frame)
 
         # Frame references
         self.l_frame_desc = tk.Label(hidden_frame, text=t("refer_sample"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_frame_desc)
         self.l_frame_1_desc = tk.Label(hidden_frame, text=t("frame_1_desc"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_frame_1_desc)
         self.l_frame_2_desc = tk.Label(hidden_frame, text=t("frame_2_desc"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_frame_2_desc)
 
     def _create_coordinate_labels_hidden(self, parent):
         """Create coordinate display labels for detection points (hidden)"""
         self.l_acc_right = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_acc_right)
         self.l_acc_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_acc_left)
         self.l_pause_middle = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_pause_middle)
         self.l_pause_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_pause_left)
         self.l_middle_pause_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_middle_pause_left)
         self.l_middle_pause_middle_2 = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_middle_pause_middle_2)
         self.l_middle_pause_middle = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_middle_pause_middle)
         self.l_middle_pause_right = tk.Label(parent, text="y,x", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_middle_pause_right)
         self.l_valid_pause = tk.Label(parent, text="y,x1,x2,x3,x4", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_valid_pause)
 
     def _create_margin_section(self, parent):
         """Create margin settings section"""
-        margin_frame = ttk.LabelFrame(parent, text=t("margin_section"))
+        margin_frame = tk.LabelFrame(parent, text=t("margin_section"), padx=5, pady=5)
+        self.themeable_labels.append(margin_frame)
 
         self.l_top_margin = tk.Label(margin_frame, text=t("top_margin"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_top_margin)
         self.e_top_margin = tk.Entry(margin_frame, font=FONT_NORMAL)
 
         self.l_bottom_margin = tk.Label(margin_frame, text=t("bottom_margin"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_bottom_margin)
         self.e_bottom_margin = tk.Entry(margin_frame, font=FONT_NORMAL)
 
         self.l_left_margin = tk.Label(margin_frame, text=t("left_margin"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_left_margin)
         self.e_left_margin = tk.Entry(margin_frame, font=FONT_NORMAL)
 
         self.l_right_margin = tk.Label(margin_frame, text=t("right_margin"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_right_margin)
         self.e_right_margin = tk.Entry(margin_frame, font=FONT_NORMAL)
 
         # 2x4 grid layout
@@ -304,12 +376,15 @@ class MainWindow:
 
     def _create_processing_section(self, parent):
         """Create processing settings section"""
-        processing_frame = ttk.LabelFrame(parent, text=t("processing_settings"))
+        processing_frame = tk.LabelFrame(parent, text=t("processing_settings"), padx=5, pady=5)
+        self.themeable_labels.append(processing_frame)
 
         self.l_thread_num = tk.Label(processing_frame, text=t("thread_num"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_thread_num)
         self.e_thread_num = tk.Entry(processing_frame, font=FONT_NORMAL)
 
         self.l_ignore_frame_cnt = tk.Label(processing_frame, text=t("ignore_frame_cnt"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_ignore_frame_cnt)
         self.e_ignore_frame_cnt = tk.Entry(processing_frame, font=FONT_NORMAL)
 
         self.l_thread_num.grid(row=0, column=0, sticky="e", padx=10, pady=3)
@@ -318,6 +393,7 @@ class MainWindow:
         self.e_ignore_frame_cnt.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
 
         self.b_save_settings = tk.Button(processing_frame, text=t("save_settings"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_save_settings)
         self.b_save_settings.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
 
         processing_frame.columnconfigure(1, weight=1)
@@ -325,35 +401,44 @@ class MainWindow:
 
     def _create_crop_section(self):
         """Create crop actions section"""
-        crop_frame = ttk.LabelFrame(self.main_container, text=t("crop_actions"))
-        crop_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        self.crop_frame = tk.LabelFrame(self.main_container, text=t("crop_actions"), padx=5, pady=5)
+        self.themeable_labels.append(self.crop_frame)
+        self.crop_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
-        self.l_measure_margin_second = tk.Label(crop_frame, text=t("measure_margin_second"), font=FONT_LABEL)
-        self.e_measure_margin_second = tk.Entry(crop_frame, font=FONT_NORMAL)
+        self.l_measure_margin_second = tk.Label(self.crop_frame, text=t("measure_margin_second"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_measure_margin_second)
+        self.e_measure_margin_second = tk.Entry(self.crop_frame, font=FONT_NORMAL)
 
-        self.b_measure_margin = tk.Button(crop_frame, text=t("measure_margin"), font=FONT_BUTTON)
-        self.b_crop = tk.Button(crop_frame, text=t("crop_btn"), font=FONT_BUTTON)
+        self.b_measure_margin = tk.Button(self.crop_frame, text=t("measure_margin"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_measure_margin)
+        self.b_crop = tk.Button(self.crop_frame, text=t("crop_btn"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_crop)
 
         self.l_measure_margin_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
         self.e_measure_margin_second.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
         self.b_measure_margin.grid(row=1, column=0, sticky="ew", padx=5, pady=3)
         self.b_crop.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
 
-        crop_frame.columnconfigure(1, weight=1)
+        self.crop_frame.columnconfigure(1, weight=1)
 
     def _create_process_section(self):
         """Create process actions section"""
-        process_frame = ttk.LabelFrame(self.main_container, text=t("process_actions"))
-        process_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        self.process_frame = tk.LabelFrame(self.main_container, text=t("process_actions"), padx=5, pady=5)
+        self.themeable_labels.append(self.process_frame)
+        self.process_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
-        self.l_start_second = tk.Label(process_frame, text=t("start_second"), font=FONT_LABEL)
-        self.e_start_second = tk.Entry(process_frame, font=FONT_NORMAL)
+        self.l_start_second = tk.Label(self.process_frame, text=t("start_second"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_start_second)
+        self.e_start_second = tk.Entry(self.process_frame, font=FONT_NORMAL)
 
-        self.l_end_second = tk.Label(process_frame, text=t("end_second"), font=FONT_LABEL)
-        self.e_end_second = tk.Entry(process_frame, font=FONT_NORMAL)
+        self.l_end_second = tk.Label(self.process_frame, text=t("end_second"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_end_second)
+        self.e_end_second = tk.Entry(self.process_frame, font=FONT_NORMAL)
 
-        self.b_cut_without_crop = tk.Button(process_frame, text=t("start_without_crop"), font=FONT_BUTTON)
-        self.b_cut_with_crop = tk.Button(process_frame, text=t("start_with_crop"), font=FONT_BUTTON)
+        self.b_cut_without_crop = tk.Button(self.process_frame, text=t("start_without_crop"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_cut_without_crop)
+        self.b_cut_with_crop = tk.Button(self.process_frame, text=t("start_with_crop"), font=FONT_BUTTON)
+        self.themeable_buttons.append(self.b_cut_with_crop)
 
         self.l_start_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
         self.e_start_second.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
@@ -362,18 +447,21 @@ class MainWindow:
         self.b_cut_without_crop.grid(row=2, column=0, sticky="ew", padx=5, pady=3)
         self.b_cut_with_crop.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
 
-        process_frame.columnconfigure(1, weight=1)
+        self.process_frame.columnconfigure(1, weight=1)
 
     def _create_tutorial_section(self):
         """Create tutorial section"""
-        tutorial_frame = ttk.Frame(self.main_container)
+        tutorial_frame = tk.Frame(self.main_container)
+        self.themeable_frames.append(tutorial_frame)
         tutorial_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
         self.l_tutorial = tk.Label(tutorial_frame, text=t("tutorial"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_tutorial)
         self.l_tutorial_url = tk.Label(
             tutorial_frame, text="www.bilibili.com/video/BV1qg411r7dV",
             font=FONT_LINK, fg="blue"
         )
+        self.themeable_labels.append(self.l_tutorial_url)
 
         self.l_tutorial.grid(row=0, column=0, sticky="e", padx=10, pady=3)
         self.l_tutorial_url.grid(row=0, column=1, sticky="w", padx=5, pady=3)
@@ -499,17 +587,8 @@ class MainWindow:
         self.l_frame_2_desc.config(text=t("frame_2_desc"))
 
         # Update section titles
-        # Need to get references to the section frames
-        for widget in self.root.winfo_children():
-            if isinstance(widget, ttk.LabelFrame):
-                title = widget.cget("text")
-                if title == t("margin_section") or title == "边距设置" or title == "Margin Settings":
-                    widget.config(text=t("margin_section"))
-                elif title == t("manual_detection") or title == "手动检测点" or title == "Manual Detection":
-                    widget.config(text=t("manual_detection"))
-                elif title == t("processing_settings") or title == "处理设置" or title == "Processing Settings":
-                    widget.config(text=t("processing_settings"))
-                elif title == t("crop_actions") or title == "裁剪操作" or title == "Crop Actions":
-                    widget.config(text=t("crop_actions"))
-                elif title == t("process_actions") or title == "处理操作" or title == "Process Actions":
-                    widget.config(text=t("process_actions"))
+        self.mode_frame.config(text=t("select_mode"))
+        self.margin_frame.config(text=t("margin_section"))
+        self.processing_frame.config(text=t("processing_settings"))
+        self.crop_frame.config(text=t("crop_actions"))
+        self.process_frame.config(text=t("process_actions"))
