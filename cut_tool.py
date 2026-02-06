@@ -99,8 +99,11 @@ MARGIN_TH = 500
 # Import i18n module
 from i18n import (
     t, get_current_language, set_language,
-    register_language_change_callback, update_combobox_preserve_selection
+    register_language_change_callback
 )
+
+# Import UI module
+from ui import MainWindow
 
 # Initialize default language before creating any GUI elements
 set_language(DEFAULT_LANGUAGE, notify=False)
@@ -111,66 +114,15 @@ current_language = get_current_language()
 def change_language(event=None):
     """Handle language change"""
     global current_language
-    idx = e_language.current()
+    idx = ui.e_language.current()
     new_language = "cn" if idx == 0 else "en"
     set_language(new_language)
     current_language = get_current_language()
-    # Callback is automatically triggered by set_language()
+    ui.update_all_text()
 
 def update_all_text():
     """Update all GUI text elements based on current language"""
-    win.title(t("window_title"))
-    l_text_working_path.config(text=t("current_working_dir"))
-    l_mode.config(text=t("select_mode"))
-    # Only update b_show_desc if it still exists (not destroyed by show_desc)
-    try:
-        b_show_desc.config(text=t("show_desc"))
-    except:
-        pass
-    l_top_margin.config(text=t("top_margin"))
-    l_bottom_margin.config(text=t("bottom_margin"))
-    l_left_margin.config(text=t("left_margin"))
-    l_right_margin.config(text=t("right_margin"))
-    l_thread_num.config(text=t("thread_num"))
-    l_ignore_frame_cnt.config(text=t("ignore_frame_cnt"))
-    b_save_settings.config(text=t("save_settings"))
-    l_measure_margin_second.config(text=t("measure_margin_second"))
-    b_measure_margin.config(text=t("measure_margin"))
-    b_crop.config(text=t("crop_btn"))
-    b_cut_without_crop.config(text=t("start_without_crop"))
-    b_cut_with_crop.config(text=t("start_with_crop"))
-    l_tutorial.config(text=t("tutorial"))
-    l_start_second.config(text=t("start_second"))
-    l_end_second.config(text=t("end_second"))
-    l_manual_set_second.config(text=t("manual_set_second"))
-    b_manual_set.config(text=t("manual_set"))
-    b_manual_set_sample.config(text=t("sample_images"))
-    b_manual_set_save.config(text=t("save_detection_points"))
-    l_frame_desc.config(text=t("refer_sample"))
-    l_frame_1_desc.config(text=t("frame_1_desc"))
-    l_frame_2_desc.config(text=t("frame_2_desc"))
-    l_manual_set_or_not.config(text=t("manual_set_or_not"))
-    l_language.config(text=t("language"))
-    # Update combobox values using helper function
-    update_combobox_preserve_selection(
-        e_mode,
-        "mode_normal_audio_only", "mode_normal_keep_video",
-        "mode_lazy_keep_valid", "mode_lazy_cut_all"
-    )
-    update_combobox_preserve_selection(
-        e_manual_set_or_not,
-        "no", "yes"
-    )
-    # Update description labels if they exist
-    try:
-        l3.config(text=t("lazy_mode_desc1") + "\n" + t("lazy_mode_desc2"), font=20, height=3, width=30)
-        l3_2.config(text=t("lazy_mode_desc3"), font=20, width=30)
-        l3_3.config(text=t("lazy_mode_desc3"), font=20)
-        l4.config(text=t("normal_mode_desc1") + "\n" + t("normal_mode_desc2"), font=20, height=3, width=30)
-        l4_2.config(text=t("normal_mode_desc3"), font=20, width=30)
-        l4_3.config(text=t("normal_mode_desc3"), font=20)
-    except:
-        pass
+    ui.update_all_text()
 
 def check_margin(top_margin, bottom_margin, left_margin, right_margin):
     if not (
@@ -267,22 +219,13 @@ def check_coordinates_setting():
     return True
 
 def set_margin(top_margin, bottom_margin, left_margin, right_margin):
-    e_top_margin.delete(0, END)
-    e_bottom_margin.delete(0, END)
-    e_left_margin.delete(0, END)
-    e_right_margin.delete(0, END)
-    e_top_margin.insert(0, top_margin)
-    e_bottom_margin.insert(0, bottom_margin)
-    e_left_margin.insert(0, left_margin)
-    e_right_margin.insert(0, right_margin)      
-    
+    ui.set_margin(top_margin, bottom_margin, left_margin, right_margin)
+
 def set_thread_num(thread_num):
-    e_thread_num.delete(0, END)
-    e_thread_num.insert(0, thread_num)    
-    
+    ui.set_thread_num(thread_num)
+
 def set_ignore_frame_cnt(ignore_frame_cnt):
-    e_ignore_frame_cnt.delete(0, END)
-    e_ignore_frame_cnt.insert(0, ignore_frame_cnt)    
+    ui.set_ignore_frame_cnt(ignore_frame_cnt)    
 
 def set_coordinates():
     if os.path.exists(path + "/检测点.txt"):
@@ -308,25 +251,19 @@ def set_coordinates():
    
 def set_coordinates_labels():
     if len(array_1) == 4 and len(array_2) == 8:
-        l_acc_right.config(text=str(array_1[0][0])+","+str(array_1[0][1]))
-        l_acc_left.config(text=str(array_1[1][0])+","+str(array_1[1][1]))
-        l_pause_middle.config(text=str(array_1[2][0])+","+str(array_1[2][1]))
-        l_pause_left.config(text=str(array_1[3][0])+","+str(array_1[3][1]))
-        l_middle_pause_left.config(text=str(array_2[0][0])+","+str(array_2[0][1]))
-        l_middle_pause_middle_2.config(text=str(array_2[1][0])+","+str(array_2[1][1]))
-        l_middle_pause_middle.config(text=str(array_2[2][0])+","+str(array_2[2][1]))
-        l_middle_pause_right.config(text=str(array_2[3][0])+","+str(array_2[3][1]))
-        l_valid_pause.config(text=str(array_2[4][0])+","+str(array_2[4][1])+","+str(array_2[5][1])+","+str(array_2[6][1])+","+str(array_2[7][1]))   
+        ui.set_coordinates(
+            str(array_1[2][0])+","+str(array_1[2][1]),  # pause_middle
+            str(array_1[3][0])+","+str(array_1[3][1]),  # pause_left
+            str(array_1[1][0])+","+str(array_1[1][1]),  # acc_left
+            str(array_1[0][0])+","+str(array_1[0][1]),  # acc_right
+            str(array_2[0][0])+","+str(array_2[0][1]),  # middle_pause_left
+            str(array_2[1][0])+","+str(array_2[1][1]),  # middle_pause_middle_2
+            str(array_2[2][0])+","+str(array_2[2][1]),  # middle_pause_middle
+            str(array_2[3][0])+","+str(array_2[3][1]),  # middle_pause_right
+            str(array_2[4][0])+","+str(array_2[4][1])+","+str(array_2[5][1])+","+str(array_2[6][1])+","+str(array_2[7][1])  # valid_pause
+        )
     else:
-        l_acc_right.config(text="y,x")
-        l_acc_left.config(text="y,x")
-        l_pause_middle.config(text="y,x")
-        l_pause_left.config(text="y,x")
-        l_middle_pause_left.config(text="y,x")
-        l_middle_pause_middle_2.config(text="y,x")
-        l_middle_pause_middle.config(text="y,x")
-        l_middle_pause_right.config(text="y,x")
-        l_valid_pause.config(text="y,x1,x2,x3,x4")
+        ui.set_coordinates("y,x", "y,x", "y,x", "y,x", "y,x", "y,x", "y,x", "y,x", "y,x1,x2,x3,x4")
  
 def get_video_info(video_path, use_cache=True):
     if use_cache and video_path in _video_metadata_cache:
@@ -478,10 +415,10 @@ def cut_with_crop(mode, start_second, end_second, thread_num, measure_margin_sec
             if check_start_end_seconds(start_second, end_second):
                 if measure_margin(measure_margin_second):
                     # Cache margin values before crop (performance optimization)
-                    cached_top = e_top_margin.get()
-                    cached_bottom = e_bottom_margin.get()
-                    cached_left = e_left_margin.get()
-                    cached_right = e_right_margin.get()
+                    cached_top = ui.e_top_margin.get()
+                    cached_bottom = ui.e_bottom_margin.get()
+                    cached_left = ui.e_left_margin.get()
+                    cached_right = ui.e_right_margin.get()
 
                     if crop(
                         cached_top,
@@ -543,20 +480,8 @@ def crop(top_margin, bottom_margin, left_margin, right_margin):
                 return True
 
 def show_desc():
-    global l3, l3_2, l3_3, l4, l4_2, l4_3
-    b_show_desc.destroy()
-    l3 = Label(win, text=t("lazy_mode_desc1"), font=20, height=3, width=30)
-    l3_2 = Label(win, text=t("lazy_mode_desc2"), font=20, width=30)
-    l3_3 = Label(win, text=t("lazy_mode_desc3"), font=20)
-    l4 = Label(win, text=t("normal_mode_desc1"), font=20, height=3, width=30)
-    l4_2 = Label(win, text=t("normal_mode_desc2"), font=20, width=30)
-    l4_3 = Label(win, text=t("normal_mode_desc3"), font=20)
-    l3.grid(row=2)
-    l3_2.grid(row=2, column=1)
-    l3_3.grid(row=2, column=2)
-    l4.grid(row=3)
-    l4_2.grid(row=3, column=1)
-    l4_3.grid(row=3, column=2)
+    """Show mode description labels"""
+    ui.show_description_labels()
 
 def save_settings(mode_i, top_margin, bottom_margin, left_margin, right_margin, thread_num, ignore_frame_cnt):
     if check_thread_num(thread_num):
@@ -601,7 +526,7 @@ def manual_set_save():
 def cut_without_crop(
     mode, top_margin, bottom_margin, left_margin, right_margin, start_second, end_second, thread_num, ignore_frame_cnt
 ):
-    if e_manual_set_or_not.current() == 0 or check_coordinates_setting():
+    if ui.e_manual_set_or_not.current() == 0 or check_coordinates_setting():
         if check_ignore_frame_cnt(ignore_frame_cnt):
             if check_thread_num(thread_num):
                 if check_start_end_seconds(start_second, end_second):
@@ -769,7 +694,7 @@ class PointCoordinates:
     def calculate_or_use_coordinates(
         self, lgt, hgt, top_margin, bottom_margin, left_margin, right_margin
     ):
-        if e_manual_set_or_not.current() == 1:
+        if ui.e_manual_set_or_not.current() == 1:
             self.acc_r_y = array_1[0][0]
             self.acc_r_x = array_1[0][1]
             self.acc_l_y = array_1[1][0]
@@ -926,7 +851,7 @@ def remove_ignore_frame_cnt_part(frame_cnt, keep_frame_y_n, vp_y_n):
             if flag == 0:
                 a += 1
             else:
-                if a <= int(e_ignore_frame_cnt.get()):
+                if a <= int(ui.e_ignore_frame_cnt.get()):
                     for j in range(start, i - 1):
                         vp_y_n[j] = False
                 a = 0
@@ -936,7 +861,7 @@ def remove_ignore_frame_cnt_part(frame_cnt, keep_frame_y_n, vp_y_n):
             if flag == 1:
                 a += 1
             else:
-                if a <= int(e_ignore_frame_cnt.get()):
+                if a <= int(ui.e_ignore_frame_cnt.get()):
                     for j in range(start, i - 1):
                         keep_frame_y_n[j] = False
                 a = 0
@@ -972,7 +897,7 @@ def cleanup(working_path):
                 # Remove from cache if present
                 if full_file_path in _video_metadata_cache:
                     del _video_metadata_cache[full_file_path]
-            elif get_frame_cnt(full_file_path) <= int(e_ignore_frame_cnt.get()) and full_file_path.lower().endswith('.mp4'):
+            elif get_frame_cnt(full_file_path) <= int(ui.e_ignore_frame_cnt.get()) and full_file_path.lower().endswith('.mp4'):
                 os.remove(full_file_path)
                 # Remove from cache if present
                 if full_file_path in _video_metadata_cache:
@@ -982,36 +907,37 @@ def cleanup(working_path):
 
 
 def update_entry_state(event):
-    if e_manual_set_or_not.current() == 1:
-        e_top_margin.config(state="disable")
-        e_bottom_margin.config(state="disable")
-        e_left_margin.config(state="disable")
-        e_right_margin.config(state="disabled")
-        b_save_settings.config(state="disabled")
-        e_measure_margin_second.config(state="disabled")
-        b_measure_margin.config(state="disabled")
-        b_crop.config(state="disabled")
-        b_cut_with_crop.config(state="disabled")
-        e_manual_set_second_1.config(state="normal")
-        e_manual_set_second_2.config(state="normal")
-        b_manual_set.config(state="normal")
-        b_manual_set_sample.config(state="normal")
-        b_manual_set_save.config(state="normal")  
+    """Enable/disable widgets based on manual detection mode"""
+    if ui.e_manual_set_or_not.current() == 1:
+        ui.e_top_margin.config(state="disable")
+        ui.e_bottom_margin.config(state="disable")
+        ui.e_left_margin.config(state="disable")
+        ui.e_right_margin.config(state="disabled")
+        ui.b_save_settings.config(state="disabled")
+        ui.e_measure_margin_second.config(state="disabled")
+        ui.b_measure_margin.config(state="disabled")
+        ui.b_crop.config(state="disabled")
+        ui.b_cut_with_crop.config(state="disabled")
+        ui.e_manual_set_second_1.config(state="normal")
+        ui.e_manual_set_second_2.config(state="normal")
+        ui.b_manual_set.config(state="normal")
+        ui.b_manual_set_sample.config(state="normal")
+        ui.b_manual_set_save.config(state="normal")
     else:
-        e_top_margin.config(state="normal")
-        e_bottom_margin.config(state="normal")
-        e_left_margin.config(state="normal")
-        e_right_margin.config(state="normal")
-        b_save_settings.config(state="normal")
-        e_measure_margin_second.config(state="normal")
-        b_measure_margin.config(state="normal")
-        b_crop.config(state="normal")
-        b_cut_with_crop.config(state="normal")
-        e_manual_set_second_1.config(state="disabled")
-        e_manual_set_second_2.config(state="disabled")
-        b_manual_set.config(state="disabled")
-        b_manual_set_sample.config(state="disabled")  
-        b_manual_set_save.config(state="disabled")  
+        ui.e_top_margin.config(state="normal")
+        ui.e_bottom_margin.config(state="normal")
+        ui.e_left_margin.config(state="normal")
+        ui.e_right_margin.config(state="normal")
+        ui.b_save_settings.config(state="normal")
+        ui.e_measure_margin_second.config(state="normal")
+        ui.b_measure_margin.config(state="normal")
+        ui.b_crop.config(state="normal")
+        ui.b_cut_with_crop.config(state="normal")
+        ui.e_manual_set_second_1.config(state="disabled")
+        ui.e_manual_set_second_2.config(state="disabled")
+        ui.b_manual_set.config(state="disabled")
+        ui.b_manual_set_sample.config(state="disabled")
+        ui.b_manual_set_save.config(state="disabled")  
 
 class TimeCost:
     def __init__(self):
@@ -1199,7 +1125,7 @@ def lazy_version(
         # for i in range(2760, len(keep_frame_y_n)):
             # print("i is ", i, ", keep is ", keep_frame_y_n[i])
         
-        if int(e_ignore_frame_cnt.get()) > 0:
+        if int(ui.e_ignore_frame_cnt.get()) > 0:
             remove_ignore_frame_cnt_part(frame_cnt, keep_frame_y_n, vp_y_n)
         
         
@@ -1624,250 +1550,92 @@ def normal_version(
     
 # main here
 win = Tk()
-win.title(t("window_title"))
+ui = MainWindow(win, working_path, DEFAULT_LANGUAGE)
 
-win.geometry(str(1300 + len(path.encode("utf-8")) * 5) + "x900")
-
-l_text_working_path = Label(win, text=t("current_working_dir"), font=20, height=3)
-l_working_path = Label(win, text=working_path, bg="lightgray", font=20, height=3)
-
-l_mode = Label(win, text=t("select_mode"), font=20, height=3)
-e_mode = ttk.Combobox(win, font=20, height=4, width=28)
-e_mode["value"] = (t("mode_normal_audio_only"), t("mode_normal_keep_video"), t("mode_lazy_keep_valid"), t("mode_lazy_cut_all"))
-win.option_add("*TCombobox*Listbox.font", 20)
-e_mode.current(1)  # give default
-b_show_desc = Button(win, text=t("show_desc"), command=show_desc, font=20)
-
-# Language selector
-l_language = Label(win, text=t("language"), font=20, height=2)
-e_language = ttk.Combobox(win, values=["中文", "English"], font=20, width=10)
-e_language.current(0 if DEFAULT_LANGUAGE == "cn" else 1)
-e_language.bind("<<ComboboxSelected>>", change_language)
-
-l_top_margin = Label(win, text=t("top_margin"), font=20, height=2)
-e_top_margin = Entry(win, bg="white", font=20)
-
-l_bottom_margin = Label(win, text=t("bottom_margin"), font=20, height=2)
-e_bottom_margin = Entry(win, bg="white", font=20)
-
-l_left_margin = Label(win, text=t("left_margin"), font=20, height=2)
-e_left_margin = Entry(win, bg="white", font=20)
-
-l_right_margin = Label(win, text=t("right_margin"), font=20, height=2)
-e_right_margin = Entry(win, bg="white", font=20)
-
+# Set default values
 set_margin(0, 0, 0, 0)
+ui.e_thread_num.insert(0, DEFAULT_THREAD_NUM)
+ui.e_ignore_frame_cnt.insert(0, DEFAULT_IGNORE_FRAME_CNT)
 
-l_thread_num = Label(win, text=t("thread_num"), font=20, height=2)
-e_thread_num = Entry(win, bg="white", font=20)
+# Disable manual detection controls initially
+ui.e_manual_set_second_1.config(state="disabled")
+ui.e_manual_set_second_2.config(state="disabled")
+ui.b_manual_set.config(state="disabled")
+ui.b_manual_set_sample.config(state="disabled")
+ui.b_manual_set_save.config(state="disabled")
 
-e_thread_num.insert(0, DEFAULT_THREAD_NUM)
+# Register callbacks for UI events
+ui.b_show_desc.config(command=show_desc)
+ui.e_language.bind("<<ComboboxSelected>>", change_language)
+ui.e_manual_set_or_not.bind("<<ComboboxSelected>>", update_entry_state)
+ui.l_tutorial_url.bind("<ButtonPress-1>", jump_to_tutorial)
 
-l_ignore_frame_cnt = Label(win, text=t("ignore_frame_cnt"), font=20, height=2)
-e_ignore_frame_cnt = Entry(win, bg="white", font=20)
-
-e_ignore_frame_cnt.insert(0, DEFAULT_IGNORE_FRAME_CNT)
-
-b_save_settings = Button(
-    win,
-    text=t("save_settings"),
+ui.b_save_settings.config(
     command=lambda: save_settings(
-        e_mode.current(),
-        e_top_margin.get(),
-        e_bottom_margin.get(),
-        e_left_margin.get(),
-        e_right_margin.get(),
-        e_thread_num.get(),
-        e_ignore_frame_cnt.get()
-    ),
-    font=20
+        ui.e_mode.current(),
+        ui.e_top_margin.get(),
+        ui.e_bottom_margin.get(),
+        ui.e_left_margin.get(),
+        ui.e_right_margin.get(),
+        ui.e_thread_num.get(),
+        ui.e_ignore_frame_cnt.get()
+    )
 )
 
-l_measure_margin_second = Label(win, text=t("measure_margin_second"), font=20, height=2)
-e_measure_margin_second = Entry(win, bg="white", font=20)
-
-b_measure_margin = Button(
-    win,
-    text=t("measure_margin"),
-    command=lambda: measure_margin(e_measure_margin_second.get()),
-    font=20
+ui.b_measure_margin.config(
+    command=lambda: measure_margin(ui.e_measure_margin_second.get())
 )
-b_crop = Button(
-    win,
-    text=t("crop_btn"),
+
+ui.b_crop.config(
     command=lambda: crop(
-        e_top_margin.get(),
-        e_bottom_margin.get(),
-        e_left_margin.get(),
-        e_right_margin.get()
-    ),
-    font=20
+        ui.e_top_margin.get(),
+        ui.e_bottom_margin.get(),
+        ui.e_left_margin.get(),
+        ui.e_right_margin.get()
+    )
 )
 
-b_cut_without_crop = Button(
-    win,
-    text=t("start_without_crop"),
+ui.b_cut_without_crop.config(
     command=lambda: cut_without_crop(
-        e_mode.current(),
-        e_top_margin.get(),
-        e_bottom_margin.get(),
-        e_left_margin.get(),
-        e_right_margin.get(),
-        e_start_second.get(),
-        e_end_second.get(),
-        e_thread_num.get(),
-        e_ignore_frame_cnt.get()
-    ),
-    font=20
+        ui.e_mode.current(),
+        ui.e_top_margin.get(),
+        ui.e_bottom_margin.get(),
+        ui.e_left_margin.get(),
+        ui.e_right_margin.get(),
+        ui.e_start_second.get(),
+        ui.e_end_second.get(),
+        ui.e_thread_num.get(),
+        ui.e_ignore_frame_cnt.get()
+    )
 )
-b_cut_with_crop = Button(
-    win,
-    text=t("start_with_crop"),
+
+ui.b_cut_with_crop.config(
     command=lambda: cut_with_crop(
-        e_mode.current(),
-        e_start_second.get(),
-        e_end_second.get(),
-        e_thread_num.get(),
-        e_measure_margin_second.get(),
-        e_ignore_frame_cnt.get()
-    ),
-    font=20
+        ui.e_mode.current(),
+        ui.e_start_second.get(),
+        ui.e_end_second.get(),
+        ui.e_thread_num.get(),
+        ui.e_measure_margin_second.get(),
+        ui.e_ignore_frame_cnt.get()
+    )
 )
 
-l_tutorial = Label(win, text=t("tutorial"), font=20, height=2)
-
-ft = tkFont.Font(family="Fixdsys", size=11, weight=tkFont.NORMAL, underline=1)
-l_tutorial_url = Label(
-    win, text="www.bilibili.com/video/BV1qg411r7dV", font=ft, fg="blue", height=2
+ui.b_manual_set.config(
+    command=lambda: set_coordinates_manually(ui.e_manual_set_second_1.get(), ui.e_manual_set_second_2.get())
 )
-l_tutorial_url.bind("<ButtonPress-1>", jump_to_tutorial)
 
-
-l_start_second = Label(win, text=t("start_second"), font=20, height=2)
-e_start_second = Entry(win, bg="white", font=20)
-
-l_end_second = Label(win, text=t("end_second"), font=20, height=2)
-e_end_second = Entry(win, bg="white", font=20)
-
-
-
-
-l_manual_set_second = Label(win, text=t("manual_set_second"), font=20, height=2)
-e_manual_set_second_1 = Entry(win, bg="white", font=20, width=10)
-e_manual_set_second_2 = Entry(win, bg="white", font=20, width=10)
-b_manual_set = Button(
-    win,
-    text=t("manual_set"),
-    command=lambda: set_coordinates_manually(e_manual_set_second_1.get(),e_manual_set_second_2.get()),
-    font=20
+ui.b_manual_set_sample.config(
+    command=lambda: set_coordinates_sample()
 )
-b_manual_set_sample = Button(
-    win,
-    text=t("sample_images"),
-    command=lambda: set_coordinates_sample(),
-    font=20
+
+ui.b_manual_set_save.config(
+    command=lambda: manual_set_save()
 )
-b_manual_set_save = Button(
-    win,
-    text=t("save_detection_points"),
-    command=lambda: manual_set_save(),
-    font=20
-)
-l_pause_middle = Label(win, text="y,x", font=20, height=2)
-l_pause_left = Label(win, text="y,x", font=20, height=2)
 
-l_frame_desc = Label(win, text=t("refer_sample"), font=20, height=2)
-l_frame_1_desc = Label(win, text=t("frame_1_desc"), font=20, height=2)
-l_frame_2_desc = Label(win, text=t("frame_2_desc"), font=20, height=2)
-
-l_acc_left = Label(win, text="y,x", font=20, height=2)
-l_acc_right = Label(win, text="y,x", font=20, height=2)
-
-l_middle_pause_middle_2 = Label(win, text="y,x", font=20, height=2)
-l_middle_pause_left = Label(win, text="y,x", font=20, height=2)
-l_middle_pause_middle = Label(win, text="y,x", font=20, height=2)
-l_middle_pause_right = Label(win, text="y,x", font=20, height=2)
-
-l_valid_pause = Label(win, text="y,x1,x2,x3,x4", font=20, height=2)
-#l_valid_pause_2 = Label(win, text="y,x1,x2,x3,x4", font=20, height=2)
-
-l_manual_set_or_not = Label(win, text=t("manual_set_or_not"), font=20, height=3)
-
-e_manual_set_or_not = ttk.Combobox(win, values=(t("no"), t("yes")), font=20, height=4, width=10)
-e_manual_set_or_not.current(0)
-e_manual_set_second_1.config(state="disabled")
-e_manual_set_second_2.config(state="disabled")
-b_manual_set.config(state="disabled")
-b_manual_set_sample.config(state="disabled")  
-b_manual_set_save.config(state="disabled")  
-e_manual_set_or_not.bind("<<ComboboxSelected>>", update_entry_state)
-
-l_text_working_path.grid(row=0)
-l_working_path.grid(row=0, column=1)
-l_language.grid(row=0, column=2)
-e_language.grid(row=0, column=3)
-l_mode.grid(row=1)
-e_mode.grid(row=1, column=1)
-b_show_desc.grid(row=1, column=2)
-
-l_top_margin.grid(row=4)
-e_top_margin.grid(row=4, column=1)
-l_bottom_margin.grid(row=5)
-e_bottom_margin.grid(row=5, column=1)
-l_left_margin.grid(row=6)
-e_left_margin.grid(row=6, column=1)
-l_right_margin.grid(row=7)
-e_right_margin.grid(row=7, column=1)
-
-l_thread_num.grid(row=8)
-e_thread_num.grid(row=8, column=1)
-
-l_ignore_frame_cnt.grid(row=9)
-e_ignore_frame_cnt.grid(row=9, column=1)
-
-b_save_settings.grid(row=10)
-
-l_measure_margin_second.grid(row=11)
-e_measure_margin_second.grid(row=11, column=1)
-b_measure_margin.grid(row=12)
-b_crop.grid(row=12, column=1)
-
-l_start_second.grid(row=13)
-e_start_second.grid(row=13, column=1)
-l_end_second.grid(row=14)
-e_end_second.grid(row=14, column=1)
-
-b_cut_without_crop.grid(row=15, column=0)
-b_cut_with_crop.grid(row=15, column=1)
-l_tutorial.grid(row=16, column=0)
-l_tutorial_url.grid(row=16, column=1)
-
-l_manual_set_or_not.grid(row=4, column=2)
-e_manual_set_or_not.grid(row=4, column=3)
-l_manual_set_second.grid(row=5, column=2)
-e_manual_set_second_1.grid(row=5, column=3)
-e_manual_set_second_2.grid(row=5, column=4)
-b_manual_set.grid(row=6, column=2)
-b_manual_set_sample.grid(row=6, column=3)
-b_manual_set_save.grid(row=6,column=4)
-l_acc_right.grid(row=7, column=2)
-l_acc_left.grid(row=8, column=2)
-l_frame_desc.grid(row=7, column=3, columnspan=2)
-l_frame_1_desc.grid(row=8, column=3, columnspan=2)
-l_frame_2_desc.grid(row=9, column=3, columnspan=2)
-l_pause_middle.grid(row=9, column=2)
-l_pause_left.grid(row=10, column=2)
-l_middle_pause_left.grid(row=11, column=2)
-l_middle_pause_middle_2.grid(row=12, column=2)
-l_middle_pause_middle.grid(row=13, column=2)
-l_middle_pause_right.grid(row=14, column=2)
-l_valid_pause.grid(row=15, column=2)
-#l_valid_pause_2.grid(row=16, column=2)
-
-
+# Load settings if file exists
 if os.path.exists(path + "/设置.txt"):
     with open(path + "/设置.txt") as f:
-        e_mode.current(int(f.readline()))
+        ui.e_mode.current(int(f.readline()))
         set_margin(
             int(f.readline()), int(f.readline()), int(f.readline()), int(f.readline())
         )
@@ -1876,10 +1644,10 @@ if os.path.exists(path + "/设置.txt"):
         # Read language preference
         lang_line = f.readline().strip()
         if lang_line:
-            set_language(lang_line)  # Use i18n function
+            set_language(lang_line)
             current_language = get_current_language()
-            e_language.current(0 if current_language == "cn" else 1)
-            update_all_text()
+            ui.e_language.current(0 if current_language == "cn" else 1)
+            ui.update_all_text()
 
 set_coordinates()
 

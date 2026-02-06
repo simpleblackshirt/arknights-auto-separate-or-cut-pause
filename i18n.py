@@ -43,6 +43,11 @@ TRANSLATIONS = {
         "manual_set_or_not": "是否手动设置检测点",
         "no": "否",
         "yes": "是",
+        # Theme options
+        "theme": "主题",
+        "light": "浅色",
+        "dark": "深色",
+        "auto": "自动",
         # Mode options
         "mode_normal_audio_only": "正常模式（仅保留无效暂停音效）",
         "mode_normal_keep_video": "正常模式（保留无效暂停视频）",
@@ -147,6 +152,11 @@ TRANSLATIONS = {
         "manual_set_or_not": "Manually set detection points?",
         "no": "No",
         "yes": "Yes",
+        # Theme options
+        "theme": "Theme",
+        "light": "Light",
+        "dark": "Dark",
+        "auto": "Auto",
         # Mode options
         "mode_normal_audio_only": "Normal Mode (keep invalid pause audio only)",
         "mode_normal_keep_video": "Normal Mode (keep invalid pause video)",
