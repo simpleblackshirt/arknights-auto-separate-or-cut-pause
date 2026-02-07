@@ -42,7 +42,7 @@ FOURCC = cv2.VideoWriter_fourcc("m", "p", "4", "v")
 DEFAULT_THREAD_NUM = 4
 DEFAULT_IGNORE_FRAME_CNT = 0
 SHOW_PROGRESS_SEG = 5
-DEFAULT_LANGUAGE = "en"  # Default language: "cn" for Chinese, "en" for English
+DEFAULT_LANGUAGE = "en"  # Default language: "cn" for Chinese, "en" for English, "ja" for Japanese
 
 P_M_Y_CO = 0.074             #(right top) pause middle coefficient
 P_M_X_CO = 0.112
@@ -115,7 +115,12 @@ def change_language(event=None):
     """Handle language change"""
     global current_language
     idx = ui.e_language.current()
-    new_language = "cn" if idx == 0 else "en"
+    if idx == 0:
+        new_language = "cn"
+    elif idx == 1:
+        new_language = "en"
+    else:
+        new_language = "ja"
     set_language(new_language)
     current_language = get_current_language()
     ui.update_all_text()
@@ -1651,7 +1656,7 @@ if os.path.exists(path + "/settings.txt"):
         if lang_line:
             set_language(lang_line)
             current_language = get_current_language()
-            ui.e_language.current(0 if current_language == "cn" else 1)
+            ui.e_language.current(0 if current_language == "cn" else 1 if current_language == "en" else 2)
             ui.update_all_text()
 
 set_coordinates()

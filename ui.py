@@ -291,8 +291,8 @@ class MainWindow:
 
         self.l_language = tk.Label(lang_theme_frame, text=t("language"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_language)
-        self.e_language = ttk.Combobox(lang_theme_frame, values=["中文", "English"], font=FONT_NORMAL, width=10)
-        self.e_language.current(0 if self.default_language == "cn" else 1)
+        self.e_language = ttk.Combobox(lang_theme_frame, values=["中文", "English", "日本語"], font=FONT_NORMAL, width=10)
+        self.e_language.current(0 if self.default_language == "cn" else 1 if self.default_language == "en" else 2)
 
         self.l_theme = tk.Label(lang_theme_frame, text=t("theme"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_theme)

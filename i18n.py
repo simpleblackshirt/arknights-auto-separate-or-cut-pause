@@ -10,7 +10,7 @@ This module provides:
 
 from typing import Callable
 
-# Translation dictionary for bilingual support
+# Translation dictionary for multilingual support
 TRANSLATIONS = {
     "cn": {
         "window_title": "明日方舟自动分离/剪掉暂停",
@@ -128,6 +128,123 @@ TRANSLATIONS = {
         "log_timing_generating_video_segments": "生成视频片段",
         "log_timing_generating_audio_segments": "生成音频片段",
         "log_timing_merging_video_audio": "合并视频音频",
+    },
+    "ja": {
+        "window_title": "アークナイツ 自動分離/ポーズカット",
+        "language": "言語",
+        "current_working_dir": "現在の作業ディレクトリ",
+        "select_mode": "モードを選択",
+        "show_desc": "説明を表示",
+        "close": "閉じる",
+        "proceed": "続行",
+        "top_margin": "上部余白（ピクセル）",
+        "bottom_margin": "下部余白",
+        "left_margin": "左余白",
+        "right_margin": "右余白",
+        "thread_num": "スレッド数",
+        "ignore_frame_cnt": "このフレーム数以下のセグメントを無視",
+        "save_settings": "設定を保存",
+        "measure_margin_second": "余白計測秒数（小数可）",
+        "measure_margin": "余白を計測",
+        "crop_btn": "余白でクロップ（余白は0にリセットされます）",
+        "start_without_crop": "クリックして自動分離/ポーズカットを開始（クロップなし）",
+        "start_with_crop": "クリックして自動分離/ポーズカットを開始（クロップあり）",
+        "tutorial": "詳細なチュートリアル：",
+        "start_second": "開始秒数",
+        "end_second": "終了秒数",
+        "manual_set_second": "検出点フレーム秒数を手動設定（小数可）",
+        "manual_set": "手動設定",
+        "sample_images": "サンプル画像",
+        "save_detection_points": "検出点を保存",
+        "refer_sample": "サンプル画像を参照してください",
+        "frame_1_desc": "前者の秒数は1倍速でポーズなしのフレーム",
+        "frame_2_desc": "後者の秒数は有効なポーズフレーム",
+        "manual_set_or_not": "検出点を手動設定しますか？",
+        "no": "いいえ",
+        "yes": "はい",
+        # Section titles
+        "margin_section": "余白設定",
+        "manual_detection": "手動検出点",
+        "processing_settings": "処理設定",
+        "crop_actions": "クロップ操作",
+        "process_actions": "処理操作",
+        # Theme options
+        "theme": "テーマ",
+        "light": "ライト",
+        "dark": "ダーク",
+        "auto": "自動",
+        # Mode options
+        "mode_normal_audio_only": "ノーマルモード（無効なポーズの音声のみ保持）",
+        "mode_normal_keep_video": "ノーマルモード（無効なポーズの動画を保持）",
+        "mode_lazy_keep_valid": "レイジーモード（有効なポーズを保持）",
+        "mode_lazy_cut_all": "レイジーモード（ポーズ全カット）",
+        # Description labels
+        "lazy_mode_desc1": "レイジーモードは自動的にポーズをカットし\n1倍速の部分を2倍速に加速します",
+        "lazy_mode_desc2": "効果音を保持する必要がない場合に適しています",
+        "lazy_mode_desc3": "このモードは1つのファイルのみを生成します",
+        "normal_mode_desc1": "ノーマルモードは自動的にポーズ部分を分離し\n効果音を保持します",
+        "normal_mode_desc2": "効果音を保持する必要がある場合に適しています\n（注：ノーマルモードはmkv形式をサポートしていません）",
+        "normal_mode_desc3": "このモードは複数のファイルを生成します",
+        # Error messages
+        "error_title": "エラー！",
+        "margin_param_error": "余白パラメータエラー（整数である必要があります）",
+        "margin_too_large": "余白ピクセル値が大きすぎます。再設定してください",
+        "negative_margin_error": "負の余白をクロップできません（ポーズカットには影響しません）",
+        "aftercrop_name_error": "クロップ後のファイル名をaftercrop.mp4にすることはできません",
+        "duplicate_file_error": "親ディレクトリに同じ名前のファイルが既に存在します。名前を変更してください",
+        "start_end_param_error": "開始/終了秒数パラメータエラー（正の整数である必要があります）",
+        "end_must_be_greater": "終了秒数は開始秒数より大きい必要があります",
+        "no_out_prefix": "ファイル名は'out'で始めることはできません。名前を変更してください",
+        "single_file_required": "作業ディレクトリには正確に1つのファイルが含まれている必要があります",
+        "measure_margin_error": "余白計測秒数エラー（0より大きい数値、小数可）",
+        "manual_set_second_error": "検出点秒数の手動設定エラー（0より大きい数値、小数可）",
+        "margin_exceeds_length": "余白計測秒数は動画長より小さい必要があります",
+        "thread_num_error": "スレッド数は1〜16の整数である必要があります",
+        "ignore_frame_error": "無視フレーム数は0以上の整数である必要があります",
+        "no_detection_points": "検出点が設定されていません",
+        "calculation_error": "計算エラー。正しい余白計測秒数を再入力してください（編成表示のフレーム）",
+        "end_exceeds_video": "終了秒数は動画長より小さい必要があります",
+        "sample_image_missing": "サンプル画像が見つかりません。再ダウンロードしてください",
+        "frame_read_failed": "フレームの読み取りに失敗しました",
+        "not_4_points": "4つのポイントがすべて設定されていません。再設定してください",
+        "not_8_points": "8つのポイントがすべて設定されていません。再設定してください",
+        # Info messages
+        "info_title": "メッセージ",
+        "margin_filled": "余白が入力されました",
+        "settings_saved": "設定が保存されました",
+        "detection_points_saved": "検出点の座標が保存されました",
+        "warning_title": "注意",
+        "fps_warning": "動画のフレームレートが整数ではありません。編集の問題が発生する可能性があります。他のソフトウェアを使用して整数フレームレートのファイルとして再エクスポートすることをお勧めします。OKをクリックするかウィンドウを閉じて続行してください",
+        "click_4_points": "サンプル画像1を参照して、順番に以下の4つのポイントをクリックしてください（赤い×マークの中心位置）：\n\nポイント1：右上の1倍速Xのすぐ下にある三角形の白い領域をクリック\nポイント2：右上の1倍速1のすぐ下にある灰色の領域をクリック\nポイント3：右上の一時停止アイコンの中央にある灰色の領域をクリック\nポイント4：右上の一時停止アイコンの左側にある白い領域をクリック",
+        "click_8_points": "サンプル画像2を参照して、順番に以下の8つのポイントをクリックしてください（赤い×マークの中心位置）：\n\nポイント1：中央のP文字のT型接続部をクリック\nポイント2：中央のU文字の中央にある灰色の領域をクリック\nポイント3：中央のU文字の下にある白い領域をクリック\nポイント4：中央のE文字のT型接続部の上にある白い領域をクリック\nポイント5〜8：左側の「スキル」の上にある灰色のバーをクリック（縦座標は灰色のバーと同じ、横座標は均等に配置されたポイント）",
+        # File suffixes (internal use)
+        "valid_pause": "_有効ポーズ",
+        "invalid_pause": "_無効ポーズ",
+        # Console logging messages
+        "log_crop_complete": "完了しました。working_folder内のクロップ後のaftercrop.mp4ファイルを確認してください。元のファイルは親ディレクトリに移動されました",
+        "log_started": "開始",
+        "log_lazy_complete": "完了しました。working_folder内のoutput.mp4ファイルを確認してください",
+        "log_normal_complete": "完了しました。working_folder内の分割されたmp4ファイルを確認してください",
+        "log_segment_deleted": "セグメント {} は無視フレーム数以下であるため、削除されました",
+        "log_timing_for": "    {} のタイミング計測",
+        "log_timing_started": "    タイミング開始: {}",
+        "log_timing_ended": "    タイミング終了: {}",
+        "log_time_elapsed": "        経過時間: {}",
+        "log_thread_analyze_pause_start": "スレッド{}：ポーズ位置の分析を開始",
+        "log_thread_100_percent": "スレッド{}：100%",
+        "log_thread_cut_pause_accel_start": "スレッド{}：ポーズのカットと加速を開始",
+        "log_thread_no_intersection": "開始/終了秒数が割り当てられた範囲と交差していないため、スレッド{}は開始されませんでした\n編集が必要な部分のみを含めるようにしてください",
+        "log_thread_generate_video_start": "スレッド{}：動画セグメントの生成を開始",
+        "log_thread_merge_audio_video_start": "スレッド{}：音声と動画セグメントの結合を開始",
+        "log_thread_no_audio_rename": "スレッド{}：動画で音声が検出されなかったため、名前の変更のみ",
+        "log_timing_cropping": "クロップ",
+        "log_timing_full_process": "フルプロセス",
+        "log_timing_cleaning_segments": "セグメントのクリーンアップ",
+        "log_timing_analyzing_pauses": "ポーズの分析",
+        "log_timing_generating_video": "動画の生成",
+        "log_timing_generating_video_segments": "動画セグメントの生成",
+        "log_timing_generating_audio_segments": "音声セグメントの生成",
+        "log_timing_merging_video_audio": "動画と音声の結合",
     },
     "en": {
         "window_title": "Arknights Auto Separate/Cut Pause",
@@ -265,7 +382,7 @@ class I18nManager:
         Set current language and optionally notify callbacks
 
         Args:
-            language: Language code ("cn" or "en")
+            language: Language code ("cn", "en", or "ja")
             notify: Whether to trigger update callbacks (default: True)
         """
         if language in TRANSLATIONS:
