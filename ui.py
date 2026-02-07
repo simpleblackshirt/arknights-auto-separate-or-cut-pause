@@ -330,7 +330,7 @@ class MainWindow:
 
         self.l_mode.grid(row=0, column=0, sticky="e", padx=10, pady=5)
         self.e_mode.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
-        self.b_show_desc_frame.grid(row=0, column=2, sticky="ew", padx=10, pady=5)
+        self.b_show_desc_frame.grid(row=0, column=2, sticky="ew", padx=10, pady=(5, 10))
 
         self.mode_frame.columnconfigure(1, weight=1)
 
@@ -444,7 +444,7 @@ class MainWindow:
         )
         info_2_btn_frame.pack(side="left", padx=(5, 0))
 
-        coord_2_container.grid(row=4, column=1, columnspan=2, sticky="w", padx=10, pady=2)
+        coord_2_container.grid(row=4, column=1, columnspan=2, sticky="w", padx=10, pady=(2, 10))
 
     def _create_margin_section(self, parent):
         """Create margin settings section"""
@@ -474,8 +474,8 @@ class MainWindow:
         self.e_bottom_margin.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
         self.l_left_margin.grid(row=2, column=0, sticky="e", padx=10, pady=3)
         self.e_left_margin.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
-        self.l_right_margin.grid(row=3, column=0, sticky="e", padx=10, pady=3)
-        self.e_right_margin.grid(row=3, column=1, sticky="ew", padx=5, pady=3)
+        self.l_right_margin.grid(row=3, column=0, sticky="e", padx=10, pady=(3, 10))
+        self.e_right_margin.grid(row=3, column=1, sticky="ew", padx=5, pady=(3, 10))
 
         margin_frame.columnconfigure(1, weight=1)
         return margin_frame
@@ -504,7 +504,7 @@ class MainWindow:
         self.b_save_settings_frame, self.b_save_settings = self._create_bordered_button(
             processing_frame, text=t("save_settings")
         )
-        self.b_save_settings_frame.grid(row=4, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+        self.b_save_settings_frame.grid(row=4, column=0, columnspan=2, sticky="ew", padx=10, pady=(5, 10))
 
         processing_frame.columnconfigure(1, weight=1)
         return processing_frame
@@ -528,8 +528,8 @@ class MainWindow:
 
         self.l_measure_margin_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
         self.e_measure_margin_second.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
-        self.b_measure_margin_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=3)
-        self.b_crop_frame.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+        self.b_measure_margin_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=(3, 10))
+        self.b_crop_frame.grid(row=1, column=1, sticky="ew", padx=5, pady=(3, 10))
 
         self.crop_frame.columnconfigure(1, weight=1)
 
@@ -556,10 +556,10 @@ class MainWindow:
 
         self.l_start_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
         self.e_start_second.grid(row=0, column=1, sticky="w", padx=5, pady=3)
-        self.l_end_second.grid(row=1, column=0, sticky="e", padx=10, pady=3)
-        self.e_end_second.grid(row=1, column=1, sticky="w", padx=5, pady=3)
+        self.l_end_second.grid(row=1, column=0, sticky="e", padx=10, pady=(3, 10))
+        self.e_end_second.grid(row=1, column=1, sticky="w", padx=5, pady=(3, 10))
         self.b_cut_without_crop_frame.grid(row=0, column=2, sticky="ew", padx=5, pady=3)
-        self.b_cut_with_crop_frame.grid(row=1, column=2, sticky="ew", padx=5, pady=3)
+        self.b_cut_with_crop_frame.grid(row=1, column=2, sticky="ew", padx=5, pady=(3, 10))
 
         self.process_frame.columnconfigure(2, weight=1)
 
