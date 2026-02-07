@@ -50,7 +50,6 @@ class MainWindow:
         self.working_path = working_path
         self.default_language = default_language
         self.theme_mode = "auto"  # "auto", "light", or "dark"
-        self.description_labels = []  # Store description label references
 
         # Track themeable widgets
         self.themeable_labels = []  # All tk.Label widgets
@@ -198,7 +197,7 @@ class MainWindow:
         """Create all UI widgets"""
         # Window setup
         self.root.title(t("window_title"))
-        self.root.geometry("820x810")
+        self.root.geometry("820x810+150+150")
         self.root.minsize(820, 810)
 
         # Set default combobox listbox font
@@ -300,21 +299,7 @@ class MainWindow:
         self.e_mode.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
         self.b_show_desc_frame.grid(row=0, column=2, sticky="ew", padx=10, pady=5)
 
-        # Description labels container (rows 1-3)
-        self._create_description_labels()
-
         self.mode_frame.columnconfigure(1, weight=1)
-
-    def _create_description_labels(self):
-        """Create mode description labels (initially empty)"""
-        # Labels will be dynamically created/updated by show_description_labels()
-        # Reserve space for 3 description lines
-        for i in range(3):
-            lbl = tk.Label(self.mode_frame, text="", font=FONT_LABEL, justify="left")
-            self.themeable_labels.append(lbl)
-            lbl.grid(row=1 + i, column=0, columnspan=3, sticky="w", padx=10, pady=2)
-            lbl.grid_remove()  # Initially hidden
-            self.description_labels.append(lbl)
 
     def _create_two_column_section(self):
         """Create two-column section with margin and processing settings"""
