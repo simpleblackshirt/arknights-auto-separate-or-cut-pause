@@ -250,20 +250,25 @@ def set_coordinates():
             #print(array_2)
    
 def set_coordinates_labels():
+    # Default placeholder format
+    array_1_format = "(x1, y1), (x2, y2), (x3, y3), (x4, y4)"
+    array_2_format = "(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x5, y5), (x6, y6), (x7, y7), (x8, y8)"
+
     if len(array_1) == 4 and len(array_2) == 8:
-        ui.set_coordinates(
-            str(array_1[2][0])+","+str(array_1[2][1]),  # pause_middle
-            str(array_1[3][0])+","+str(array_1[3][1]),  # pause_left
-            str(array_1[1][0])+","+str(array_1[1][1]),  # acc_left
-            str(array_1[0][0])+","+str(array_1[0][1]),  # acc_right
-            str(array_2[0][0])+","+str(array_2[0][1]),  # middle_pause_left
-            str(array_2[1][0])+","+str(array_2[1][1]),  # middle_pause_middle_2
-            str(array_2[2][0])+","+str(array_2[2][1]),  # middle_pause_middle
-            str(array_2[3][0])+","+str(array_2[3][1]),  # middle_pause_right
-            str(array_2[4][0])+","+str(array_2[4][1])+","+str(array_2[5][1])+","+str(array_2[6][1])+","+str(array_2[7][1])  # valid_pause
-        )
+        # Format array_1 coordinates (4 points: acc_right, acc_left, pause_middle, pause_left)
+        array_1_coords = ", ".join([f"({pt[0]}, {pt[1]})" for pt in array_1])
+
+        # Format array_2 coordinates (8 points: 4 single points + 4 valid_pause points with same y)
+        # First 4 are (y,x) pairs
+        array_2_first_4 = ", ".join([f"({pt[0]}, {pt[1]})" for pt in array_2[:4]])
+        # valid_pause points: array_2[4][0] is y, array_2[4][1], array_2[5][1], array_2[6][1], array_2[7][1] are x values
+        y = array_2[4][0]
+        valid_pause_points = ", ".join([f"({y}, {array_2[i][1]})" for i in range(4, 8)])
+        array_2_coords = array_2_first_4 + ", " + valid_pause_points
+
+        ui.set_coordinates(array_1_coords, array_2_coords)
     else:
-        ui.set_coordinates("y,x", "y,x", "y,x", "y,x", "y,x", "y,x", "y,x", "y,x", "y,x1,x2,x3,x4")
+        ui.set_coordinates(array_1_format, array_2_format)
  
 def get_video_info(video_path, use_cache=True):
     if use_cache and video_path in _video_metadata_cache:

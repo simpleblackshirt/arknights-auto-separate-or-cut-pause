@@ -215,6 +215,9 @@ class MainWindow:
         # ===== MODE SECTION =====
         self._create_mode_section()
 
+        # ===== MANUAL DETECTION SECTION =====
+        self._create_manual_detection_section()
+
         # ===== TWO COLUMN SECTION (Margin + Processing) =====
         self._create_two_column_section()
 
@@ -227,15 +230,11 @@ class MainWindow:
         # ===== TUTORIAL SECTION =====
         self._create_tutorial_section()
 
-        # ===== MANUAL DETECTION SECTION (HIDDEN - widgets created but not displayed) =====
-        # Still create the widgets for compatibility, but don't display them
-        self._create_manual_detection_hidden()
-
     def _create_header_section(self):
         """Create header section with working path, language, and theme"""
         header_frame = tk.Frame(self.main_container)
         self.themeable_frames.append(header_frame)
-        header_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        header_frame.pack(fill="x", expand=False, padx=5, pady=(5, 0))
 
         # Working path row
         self.l_text_working_path = tk.Label(
@@ -275,7 +274,7 @@ class MainWindow:
         """Create mode selection section"""
         self.mode_frame = tk.LabelFrame(self.main_container, text=t("select_mode"), padx=5, pady=5)
         self.themeable_labels.append(self.mode_frame)
-        self.mode_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        self.mode_frame.pack(fill="x", expand=False, padx=5, pady=0)
 
         # Mode dropdown and show description button
         self.l_mode = tk.Label(self.mode_frame, text=t("select_mode"), font=FONT_LABEL)
@@ -316,7 +315,7 @@ class MainWindow:
         """Create two-column section with margin and processing settings"""
         two_col_container = tk.Frame(self.main_container)
         self.themeable_frames.append(two_col_container)
-        two_col_container.pack(fill="both", expand=True, padx=5, pady=5)
+        two_col_container.pack(fill="both", expand=False, padx=5, pady=0)
 
         # Left column - Margin Section
         self.margin_frame = self._create_margin_section(two_col_container)
@@ -330,68 +329,74 @@ class MainWindow:
         two_col_container.columnconfigure(0, weight=1)
         two_col_container.columnconfigure(1, weight=1)
 
-    def _create_manual_detection_hidden(self):
-        """Create manual detection widgets but don't display them (for compatibility)"""
-        # Create a hidden frame as parent
-        hidden_frame = tk.Frame(self.root)
-        # Don't pack or grid the frame - widgets exist but aren't visible
+    def _create_manual_detection_section(self):
+        """Create manual detection section"""
+        manual_frame = tk.LabelFrame(self.main_container, text=t("manual_detection"), padx=5, pady=5)
+        self.themeable_labels.append(manual_frame)
+        manual_frame.pack(fill="x", expand=False, padx=5, pady=0)
 
-        # Mode selector
-        self.l_manual_set_or_not = tk.Label(hidden_frame, text=t("manual_set_or_not"), font=FONT_LABEL)
+        # Grid layout configuration
+        manual_frame.columnconfigure(1, weight=1)
+        manual_frame.columnconfigure(2, weight=1)
+
+        # Row 0: Mode selector
+        self.l_manual_set_or_not = tk.Label(manual_frame, text=t("manual_set_or_not"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_manual_set_or_not)
         self.e_manual_set_or_not = ttk.Combobox(
-            hidden_frame, values=(t("no"), t("yes")), font=FONT_NORMAL, width=10
+            manual_frame, values=(t("no"), t("yes")), font=FONT_NORMAL, width=10
         )
         self.e_manual_set_or_not.current(0)
 
-        # Second inputs
-        self.l_manual_set_second = tk.Label(hidden_frame, text=t("manual_set_second"), font=FONT_LABEL)
-        self.themeable_labels.append(self.l_manual_set_second)
-        self.e_manual_set_second_1 = tk.Entry(hidden_frame, font=FONT_NORMAL, width=10)
-        self.e_manual_set_second_2 = tk.Entry(hidden_frame, font=FONT_NORMAL, width=10)
+        self.l_manual_set_or_not.grid(row=0, column=0, sticky="e", padx=10, pady=5)
+        self.e_manual_set_or_not.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
-        # Action buttons
+        # Row 1: Second inputs
+        self.l_manual_set_second = tk.Label(manual_frame, text=t("manual_set_second"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_manual_set_second)
+        self.e_manual_set_second_1 = tk.Entry(manual_frame, font=FONT_NORMAL, width=10)
+        self.e_manual_set_second_2 = tk.Entry(manual_frame, font=FONT_NORMAL, width=10)
+
+        self.l_manual_set_second.grid(row=1, column=0, sticky="e", padx=10, pady=5)
+        self.e_manual_set_second_1.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
+        self.e_manual_set_second_2.grid(row=1, column=2, sticky="ew", padx=5, pady=5)
+
+        # Row 2: Action buttons
         self.b_manual_set_frame, self.b_manual_set = self._create_bordered_button(
-            hidden_frame, text=t("manual_set")
+            manual_frame, text=t("manual_set")
         )
         self.b_manual_set_sample_frame, self.b_manual_set_sample = self._create_bordered_button(
-            hidden_frame, text=t("sample_images")
+            manual_frame, text=t("sample_images")
         )
         self.b_manual_set_save_frame, self.b_manual_set_save = self._create_bordered_button(
-            hidden_frame, text=t("save_detection_points")
+            manual_frame, text=t("save_detection_points")
         )
 
-        # Coordinate display labels
-        self._create_coordinate_labels_hidden(hidden_frame)
+        self.b_manual_set_frame.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
+        self.b_manual_set_sample_frame.grid(row=2, column=1, sticky="ew", padx=5, pady=5)
+        self.b_manual_set_save_frame.grid(row=2, column=2, sticky="ew", padx=5, pady=5)
 
-        # Frame references
-        self.l_frame_desc = tk.Label(hidden_frame, text=t("refer_sample"), font=FONT_LABEL)
+        # Row 3: Description label
+        self.l_frame_desc = tk.Label(manual_frame, text=t("refer_sample"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_frame_desc)
-        self.l_frame_1_desc = tk.Label(hidden_frame, text=t("frame_1_desc"), font=FONT_LABEL)
-        self.themeable_labels.append(self.l_frame_1_desc)
-        self.l_frame_2_desc = tk.Label(hidden_frame, text=t("frame_2_desc"), font=FONT_LABEL)
-        self.themeable_labels.append(self.l_frame_2_desc)
+        self.l_frame_desc.grid(row=3, column=0, columnspan=3, sticky="w", padx=10, pady=2)
 
-    def _create_coordinate_labels_hidden(self, parent):
-        """Create coordinate display labels for detection points (hidden)"""
-        self.l_acc_right = tk.Label(parent, text="y,x", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_acc_right)
-        self.l_acc_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_acc_left)
-        self.l_pause_middle = tk.Label(parent, text="y,x", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_pause_middle)
-        self.l_pause_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_pause_left)
-        self.l_middle_pause_left = tk.Label(parent, text="y,x", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_middle_pause_left)
-        self.l_middle_pause_middle_2 = tk.Label(parent, text="y,x", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_middle_pause_middle_2)
-        self.l_middle_pause_middle = tk.Label(parent, text="y,x", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_middle_pause_middle)
-        self.l_middle_pause_right = tk.Label(parent, text="y,x", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_middle_pause_right)
-        self.l_valid_pause = tk.Label(parent, text="y,x1,x2,x3,x4", font=FONT_LABEL)
-        self.themeable_labels.append(self.l_valid_pause)
+        # Row 4: Frame 1 description + array 1 coordinates (4 points)
+        self.l_frame_1_desc = tk.Label(manual_frame, text=t("frame_1_desc"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_frame_1_desc)
+        self.l_frame_1_desc.grid(row=4, column=0, sticky="w", padx=10, pady=2)
+
+        self.l_array_1_coords = tk.Label(manual_frame, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4)", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_array_1_coords)
+        self.l_array_1_coords.grid(row=4, column=1, columnspan=2, sticky="w", padx=10, pady=2)
+
+        # Row 5: Frame 2 description + array 2 coordinates (8 points)
+        self.l_frame_2_desc = tk.Label(manual_frame, text=t("frame_2_desc"), font=FONT_LABEL)
+        self.themeable_labels.append(self.l_frame_2_desc)
+        self.l_frame_2_desc.grid(row=5, column=0, sticky="w", padx=10, pady=2)
+
+        self.l_array_2_coords = tk.Label(manual_frame, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x5, y5), (x6, y6), (x7, y7), (x8, y8)", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_array_2_coords)
+        self.l_array_2_coords.grid(row=5, column=1, columnspan=2, sticky="w", padx=10, pady=2)
 
     def _create_margin_section(self, parent):
         """Create margin settings section"""
@@ -460,7 +465,7 @@ class MainWindow:
         """Create crop actions section"""
         self.crop_frame = tk.LabelFrame(self.main_container, text=t("crop_actions"), padx=5, pady=5)
         self.themeable_labels.append(self.crop_frame)
-        self.crop_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        self.crop_frame.pack(fill="x", expand=False, padx=5, pady=0)
 
         self.l_measure_margin_second = tk.Label(self.crop_frame, text=t("measure_margin_second"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_measure_margin_second)
@@ -484,7 +489,7 @@ class MainWindow:
         """Create process actions section"""
         self.process_frame = tk.LabelFrame(self.main_container, text=t("process_actions"), padx=5, pady=5)
         self.themeable_labels.append(self.process_frame)
-        self.process_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        self.process_frame.pack(fill="x", expand=False, padx=5, pady=0)
 
         self.l_start_second = tk.Label(self.process_frame, text=t("start_second"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_start_second)
@@ -514,7 +519,7 @@ class MainWindow:
         """Create tutorial section"""
         tutorial_frame = tk.Frame(self.main_container)
         self.themeable_frames.append(tutorial_frame)
-        tutorial_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        tutorial_frame.pack(fill="x", expand=False, padx=5, pady=(0, 5))
 
         self.l_tutorial = tk.Label(tutorial_frame, text=t("tutorial"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_tutorial)
@@ -552,19 +557,10 @@ class MainWindow:
         self.e_ignore_frame_cnt.delete(0, tk.END)
         self.e_ignore_frame_cnt.insert(0, str(cnt))
 
-    def set_coordinates(self, pause_middle, pause_left, acc_left, acc_right,
-                       middle_pause_left, middle_pause_middle_2, middle_pause_middle,
-                       middle_pause_right, valid_pause):
-        """Update coordinate display labels"""
-        self.l_pause_middle.config(text=pause_middle)
-        self.l_pause_left.config(text=pause_left)
-        self.l_acc_left.config(text=acc_left)
-        self.l_acc_right.config(text=acc_right)
-        self.l_middle_pause_left.config(text=middle_pause_left)
-        self.l_middle_pause_middle_2.config(text=middle_pause_middle_2)
-        self.l_middle_pause_middle.config(text=middle_pause_middle)
-        self.l_middle_pause_right.config(text=middle_pause_right)
-        self.l_valid_pause.config(text=valid_pause)
+    def set_coordinates(self, array_1_coords, array_2_coords):
+        """Update coordinate display labels with formatted coordinate strings"""
+        self.l_array_1_coords.config(text=array_1_coords)
+        self.l_array_2_coords.config(text=array_2_coords)
 
     def show_description_labels(self):
         """Show mode description labels in mode section"""
