@@ -14,15 +14,23 @@ THEMES = {
         "bg": "#f5f5f5",
         "fg": "#000000",
         "input_bg": "#ffffff",
+        "input_fg": "#000000",
         "path_bg": "#e0e0e0",
         "link_fg": "#0066cc",
+        "border_color": "#cccccc",
+        "button_bg": "#e8e8e8",
+        "button_active_bg": "#d0d0d0",
     },
     "dark": {
-        "bg": "#1c1c1c",
+        "bg": "#1a1a1e",
         "fg": "#cccccc",
-        "input_bg": "#2b2b2f",
-        "path_bg": "#252525",
+        "input_bg": "#222327",
+        "input_fg": "#cccccc",
+        "path_bg": "#222327",
         "link_fg": "#66b3ff",
+        "border_color": "#2b2b2f",
+        "button_bg": "#121214",
+        "button_active_bg": "#232325",
     }
 }
 
@@ -46,6 +54,7 @@ class MainWindow:
         self.themeable_labels = []  # All tk.Label widgets
         self.themeable_buttons = []  # All tk.Button widgets
         self.themeable_frames = []  # All Frame widgets
+        self.button_border_frames = []  # Border frames for buttons
 
         # Configure root window for pack layout
         self._setup_layout_config()
@@ -88,14 +97,25 @@ class MainWindow:
         for btn in self.themeable_buttons:
             try:
                 btn.configure(
-                    bg=theme["bg"],
+                    bg=theme["button_bg"],
                     fg=theme["fg"],
-                    activebackground=theme["input_bg"],
-                    highlightbackground="#cccccc",
-                    highlightcolor="#cccccc",
-                    highlightthickness=1,
-                    relief="solid",
-                    borderwidth=1
+                    activebackground=theme["button_active_bg"],
+                    activeforeground=theme["fg"],
+                    relief="flat",
+                    borderwidth=0,
+                    highlightthickness=0
+                )
+            except Exception:
+                pass
+
+        # Update all button border frames
+        for frame in self.button_border_frames:
+            try:
+                frame.configure(
+                    bg=theme["button_bg"],
+                    highlightbackground=theme["border_color"],
+                    highlightcolor=theme["border_color"],
+                    highlightthickness=1
                 )
             except Exception:
                 pass
@@ -118,7 +138,14 @@ class MainWindow:
         for widget_name in entry_widgets:
             if hasattr(self, widget_name):
                 try:
-                    getattr(self, widget_name).configure(bg=theme["input_bg"], fg=theme["fg"])
+                    getattr(self, widget_name).configure(
+                        bg=theme["input_bg"],
+                        fg=theme["input_fg"],
+                        insertbackground=theme["input_fg"],
+                        relief="flat",
+                        borderwidth=0,
+                        highlightthickness=0,
+                    )
                 except Exception:
                     pass
 
@@ -141,6 +168,28 @@ class MainWindow:
         idx = self.e_theme.current()
         self.theme_mode = ["auto", "light", "dark"][idx]
         self.apply_theme()
+
+    def _create_bordered_button(self, parent, text, command=None, font=FONT_BUTTON):
+        """Create a button with a themed border frame.
+        Returns a tuple of (border_frame, button).
+        The border_frame should be used for layout (grid/pack).
+        """
+        theme = THEMES[self.get_effective_theme()]
+        border_frame = tk.Frame(parent, bg=theme["button_bg"])
+        self.themeable_frames.append(border_frame)
+        self.button_border_frames.append(border_frame)
+
+        button = tk.Button(border_frame, text=text, font=font, command=command,
+                          bg=theme["button_bg"], fg=theme["fg"],
+                          activebackground=theme["button_active_bg"],
+                          activeforeground=theme["fg"], relief="flat",
+                          borderwidth=0, highlightthickness=0)
+        self.themeable_buttons.append(button)
+
+        # Pack button inside border frame with no gaps
+        button.pack(fill="both", expand=True, padx=1, pady=1)
+
+        return border_frame, button
 
     def _create_widgets(self):
         """Create all UI widgets"""
@@ -239,12 +288,13 @@ class MainWindow:
             t("mode_lazy_cut_all")
         )
         self.e_mode.current(1)
-        self.b_show_desc = tk.Button(self.mode_frame, text=t("show_desc"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_show_desc)
+        self.b_show_desc_frame, self.b_show_desc = self._create_bordered_button(
+            self.mode_frame, text=t("show_desc")
+        )
 
         self.l_mode.grid(row=0, column=0, sticky="e", padx=10, pady=5)
         self.e_mode.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
-        self.b_show_desc.grid(row=0, column=2, sticky="ew", padx=10, pady=5)
+        self.b_show_desc_frame.grid(row=0, column=2, sticky="ew", padx=10, pady=5)
 
         # Description labels container (rows 1-3)
         self._create_description_labels()
@@ -270,11 +320,11 @@ class MainWindow:
 
         # Left column - Margin Section
         self.margin_frame = self._create_margin_section(two_col_container)
-        self.margin_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.margin_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 5), pady=5)
 
         # Right column - Processing Section
         self.processing_frame = self._create_processing_section(two_col_container)
-        self.processing_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        self.processing_frame.grid(row=0, column=1, sticky="nsew", padx=(5, 0), pady=5)
 
         # Equal column weights
         two_col_container.columnconfigure(0, weight=1)
@@ -301,12 +351,15 @@ class MainWindow:
         self.e_manual_set_second_2 = tk.Entry(hidden_frame, font=FONT_NORMAL, width=10)
 
         # Action buttons
-        self.b_manual_set = tk.Button(hidden_frame, text=t("manual_set"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_manual_set)
-        self.b_manual_set_sample = tk.Button(hidden_frame, text=t("sample_images"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_manual_set_sample)
-        self.b_manual_set_save = tk.Button(hidden_frame, text=t("save_detection_points"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_manual_set_save)
+        self.b_manual_set_frame, self.b_manual_set = self._create_bordered_button(
+            hidden_frame, text=t("manual_set")
+        )
+        self.b_manual_set_sample_frame, self.b_manual_set_sample = self._create_bordered_button(
+            hidden_frame, text=t("sample_images")
+        )
+        self.b_manual_set_save_frame, self.b_manual_set_save = self._create_bordered_button(
+            hidden_frame, text=t("save_detection_points")
+        )
 
         # Coordinate display labels
         self._create_coordinate_labels_hidden(hidden_frame)
@@ -392,9 +445,13 @@ class MainWindow:
         self.l_ignore_frame_cnt.grid(row=1, column=0, sticky="e", padx=10, pady=3)
         self.e_ignore_frame_cnt.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
 
-        self.b_save_settings = tk.Button(processing_frame, text=t("save_settings"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_save_settings)
-        self.b_save_settings.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+        # Add spacer row to push button to bottom
+        processing_frame.rowconfigure(3, weight=1)
+
+        self.b_save_settings_frame, self.b_save_settings = self._create_bordered_button(
+            processing_frame, text=t("save_settings")
+        )
+        self.b_save_settings_frame.grid(row=4, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
 
         processing_frame.columnconfigure(1, weight=1)
         return processing_frame
@@ -409,15 +466,17 @@ class MainWindow:
         self.themeable_labels.append(self.l_measure_margin_second)
         self.e_measure_margin_second = tk.Entry(self.crop_frame, font=FONT_NORMAL)
 
-        self.b_measure_margin = tk.Button(self.crop_frame, text=t("measure_margin"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_measure_margin)
-        self.b_crop = tk.Button(self.crop_frame, text=t("crop_btn"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_crop)
+        self.b_measure_margin_frame, self.b_measure_margin = self._create_bordered_button(
+            self.crop_frame, text=t("measure_margin")
+        )
+        self.b_crop_frame, self.b_crop = self._create_bordered_button(
+            self.crop_frame, text=t("crop_btn")
+        )
 
         self.l_measure_margin_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
         self.e_measure_margin_second.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
-        self.b_measure_margin.grid(row=1, column=0, sticky="ew", padx=5, pady=3)
-        self.b_crop.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+        self.b_measure_margin_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=3)
+        self.b_crop_frame.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
 
         self.crop_frame.columnconfigure(1, weight=1)
 
@@ -435,17 +494,19 @@ class MainWindow:
         self.themeable_labels.append(self.l_end_second)
         self.e_end_second = tk.Entry(self.process_frame, font=FONT_NORMAL)
 
-        self.b_cut_without_crop = tk.Button(self.process_frame, text=t("start_without_crop"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_cut_without_crop)
-        self.b_cut_with_crop = tk.Button(self.process_frame, text=t("start_with_crop"), font=FONT_BUTTON)
-        self.themeable_buttons.append(self.b_cut_with_crop)
+        self.b_cut_without_crop_frame, self.b_cut_without_crop = self._create_bordered_button(
+            self.process_frame, text=t("start_without_crop")
+        )
+        self.b_cut_with_crop_frame, self.b_cut_with_crop = self._create_bordered_button(
+            self.process_frame, text=t("start_with_crop")
+        )
 
         self.l_start_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
         self.e_start_second.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
         self.l_end_second.grid(row=1, column=0, sticky="e", padx=10, pady=3)
         self.e_end_second.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
-        self.b_cut_without_crop.grid(row=2, column=0, sticky="ew", padx=5, pady=3)
-        self.b_cut_with_crop.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+        self.b_cut_without_crop_frame.grid(row=2, column=0, sticky="ew", padx=5, pady=3)
+        self.b_cut_with_crop_frame.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
 
         self.process_frame.columnconfigure(1, weight=1)
 
