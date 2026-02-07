@@ -567,20 +567,58 @@ class MainWindow:
         self.l_array_2_coords.config(text=array_2_coords)
 
     def show_description_labels(self):
-        """Show mode description labels in mode section"""
+        """Show mode description in a popup window"""
         mode_idx = self.e_mode.current()
-        if mode_idx in [2, 3]:  # Lazy mode
-            self.description_labels[0].config(text=t("lazy_mode_desc1"))
-            self.description_labels[1].config(text=t("lazy_mode_desc2"))
-            self.description_labels[2].config(text=t("lazy_mode_desc3"))
-        else:  # Normal mode
-            self.description_labels[0].config(text=t("normal_mode_desc1"))
-            self.description_labels[1].config(text=t("normal_mode_desc2"))
-            self.description_labels[2].config(text=t("normal_mode_desc3"))
 
-        # Show all labels
-        for lbl in self.description_labels:
-            lbl.grid()
+        # Get description lines based on mode
+        if mode_idx in [2, 3]:  # Lazy mode
+            desc_lines = [
+                t("lazy_mode_desc1"),
+                t("lazy_mode_desc2"),
+                t("lazy_mode_desc3")
+            ]
+        else:  # Normal mode
+            desc_lines = [
+                t("normal_mode_desc1"),
+                t("normal_mode_desc2"),
+                t("normal_mode_desc3")
+            ]
+
+        # Create popup window
+        popup = tk.Toplevel(self.root)
+        popup.title(t("show_desc"))
+        popup.geometry("500x200")
+        popup.resizable(False, False)
+
+        # Get current theme colors
+        theme = THEMES[self.get_effective_theme()]
+
+        # Configure popup background
+        popup.configure(bg=theme["bg"])
+
+        # Container frame
+        container = tk.Frame(popup, bg=theme["bg"], padx=20, pady=20)
+        container.pack(fill="both", expand=True)
+
+        # Description label
+        desc_text = "\n\n".join(desc_lines)
+        desc_label = tk.Label(
+            container,
+            text=desc_text,
+            font=FONT_LABEL,
+            justify="left",
+            bg=theme["bg"],
+            fg=theme["fg"],
+            wraplength=450
+        )
+        desc_label.pack(fill="both", expand=True)
+
+        # Close button
+        close_btn_frame, close_btn = self._create_bordered_button(
+            container, text=t("close")
+        )
+        close_btn.config(command=popup.destroy)
+        close_btn_frame.pack(pady=(10, 0))
 
     def update_all_text(self):
         """Update all widget text when language changes"""
