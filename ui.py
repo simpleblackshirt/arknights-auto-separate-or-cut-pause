@@ -719,6 +719,49 @@ class MainWindow:
         # Wait for popup to be closed (makes it truly modal)
         popup.wait_window()
 
+    def show_settings_saved_popup(self):
+        """Show settings saved confirmation in a themed popup window (modal)"""
+        popup = tk.Toplevel(self.root)
+        popup.title(t("info_title"))
+        popup.geometry("300x120")
+
+        # Make popup modal
+        popup.transient(self.root)
+        popup.grab_set()
+
+        # Get current theme colors
+        theme = THEMES[self.get_effective_theme()]
+
+        # Configure popup background
+        popup.configure(bg=theme["bg"])
+
+        # Container frame with theme
+        container = tk.Frame(popup, bg=theme["bg"], padx=20, pady=20)
+        container.pack(fill="both", expand=True)
+
+        # Message label with theme
+        msg_label = tk.Label(
+            container,
+            text=t("settings_saved"),
+            font=FONT_LABEL,
+            bg=theme["bg"],
+            fg=theme["fg"]
+        )
+        msg_label.pack(fill="both", expand=True)
+
+        # Close button with theme
+        close_btn_frame, close_btn = self._create_bordered_button(
+            container, text=t("close")
+        )
+        close_btn_frame.pack(pady=(10, 0))
+        close_btn.config(command=popup.destroy)
+
+        # Center popup on parent
+        popup.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - popup.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - popup.winfo_height()) // 2
+        popup.geometry(f"+{x}+{y}")
+
     def update_all_text(self):
         """Update all widget text when language changes"""
         self.root.title(t("window_title"))

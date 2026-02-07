@@ -493,7 +493,7 @@ def show_desc():
     """Show mode description labels"""
     ui.show_description_labels()
 
-def save_settings(mode_i, top_margin, bottom_margin, left_margin, right_margin, thread_num, ignore_frame_cnt):
+def save_settings(ui, mode_i, top_margin, bottom_margin, left_margin, right_margin, thread_num, ignore_frame_cnt):
     if check_thread_num(thread_num):
         if check_margin(top_margin, bottom_margin, left_margin, right_margin):
             with open(path + "/settings.txt", "w+") as f:  # Settings
@@ -505,7 +505,7 @@ def save_settings(mode_i, top_margin, bottom_margin, left_margin, right_margin, 
                 f.write(thread_num + "\n")
                 f.write(ignore_frame_cnt + "\n")
                 f.write(str(current_language) + "\n")  # Save language preference
-            messagebox.showinfo(title=t("info_title"), message=t("settings_saved"))
+            ui.show_settings_saved_popup()
 
 def manual_set_save():
     if check_coordinates_setting():
@@ -1582,6 +1582,7 @@ ui.l_tutorial_url.bind("<ButtonPress-1>", jump_to_tutorial)
 
 ui.b_save_settings.config(
     command=lambda: save_settings(
+        ui,
         ui.e_mode.current(),
         ui.e_top_margin.get(),
         ui.e_bottom_margin.get(),
