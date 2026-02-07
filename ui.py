@@ -171,7 +171,7 @@ class MainWindow:
         self.theme_mode = ["auto", "light", "dark"][idx]
         self.apply_theme()
 
-    def _create_bordered_button(self, parent, text, command=None, font=FONT_BUTTON):
+    def _create_bordered_button(self, parent, text, command=None, font=FONT_BUTTON, width=None):
         """Create a button with a themed border frame.
         Returns a tuple of (border_frame, button).
         The border_frame should be used for layout (grid/pack).
@@ -185,7 +185,7 @@ class MainWindow:
                           bg=theme["button_bg"], fg=theme["fg"],
                           activebackground=theme["button_active_bg"],
                           activeforeground=theme["fg"], relief="flat",
-                          borderwidth=0, highlightthickness=0)
+                          borderwidth=0, highlightthickness=0, width=width)
         self.themeable_buttons.append(button)
 
         # Pack button inside border frame with no gaps
@@ -541,11 +541,11 @@ class MainWindow:
 
         self.l_start_second = tk.Label(self.process_frame, text=t("start_second"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_start_second)
-        self.e_start_second = tk.Entry(self.process_frame, font=FONT_NORMAL)
+        self.e_start_second = tk.Entry(self.process_frame, font=FONT_NORMAL, width=20)
 
         self.l_end_second = tk.Label(self.process_frame, text=t("end_second"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_end_second)
-        self.e_end_second = tk.Entry(self.process_frame, font=FONT_NORMAL)
+        self.e_end_second = tk.Entry(self.process_frame, font=FONT_NORMAL, width=20)
 
         self.b_cut_without_crop_frame, self.b_cut_without_crop = self._create_bordered_button(
             self.process_frame, text=t("start_without_crop")
@@ -555,13 +555,13 @@ class MainWindow:
         )
 
         self.l_start_second.grid(row=0, column=0, sticky="e", padx=10, pady=3)
-        self.e_start_second.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+        self.e_start_second.grid(row=0, column=1, sticky="w", padx=5, pady=3)
         self.l_end_second.grid(row=1, column=0, sticky="e", padx=10, pady=3)
-        self.e_end_second.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
-        self.b_cut_without_crop_frame.grid(row=2, column=0, sticky="ew", padx=5, pady=3)
-        self.b_cut_with_crop_frame.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+        self.e_end_second.grid(row=1, column=1, sticky="w", padx=5, pady=3)
+        self.b_cut_without_crop_frame.grid(row=0, column=2, sticky="ew", padx=5, pady=3)
+        self.b_cut_with_crop_frame.grid(row=1, column=2, sticky="ew", padx=5, pady=3)
 
-        self.process_frame.columnconfigure(1, weight=1)
+        self.process_frame.columnconfigure(2, weight=1)
 
     def _create_tutorial_section(self):
         """Create tutorial section"""
