@@ -20,17 +20,19 @@ THEMES = {
         "border_color": "#cccccc",
         "button_bg": "#e8e8e8",
         "button_active_bg": "#d0d0d0",
+        "input_disabled_bg": "#e0e0e0",
     },
     "dark": {
         "bg": "#1a1a1e",
         "fg": "#cccccc",
-        "input_bg": "#222327",
+        "input_bg": "#2F3136",
         "input_fg": "#cccccc",
         "path_bg": "#222327",
         "link_fg": "#66b3ff",
         "border_color": "#2b2b2f",
         "button_bg": "#121214",
         "button_active_bg": "#232325",
+        "input_disabled_bg": "#222327",
     }
 }
 
@@ -140,6 +142,7 @@ class MainWindow:
                 try:
                     getattr(self, widget_name).configure(
                         bg=theme["input_bg"],
+                        disabledbackground=theme["input_disabled_bg"],
                         fg=theme["input_fg"],
                         insertbackground=theme["input_fg"],
                         relief="flat",
@@ -195,8 +198,8 @@ class MainWindow:
         """Create all UI widgets"""
         # Window setup
         self.root.title(t("window_title"))
-        self.root.geometry("900x700")
-        self.root.minsize(800, 600)
+        self.root.geometry("820x810")
+        self.root.minsize(820, 810)
 
         # Set default combobox listbox font
         self.root.option_add("*TCombobox*Listbox.font", FONT_NORMAL)
@@ -274,7 +277,7 @@ class MainWindow:
         """Create mode selection section"""
         self.mode_frame = tk.LabelFrame(self.main_container, text=t("select_mode"), padx=5, pady=5)
         self.themeable_labels.append(self.mode_frame)
-        self.mode_frame.pack(fill="x", expand=False, padx=5, pady=0)
+        self.mode_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
         # Mode dropdown and show description button
         self.l_mode = tk.Label(self.mode_frame, text=t("select_mode"), font=FONT_LABEL)
@@ -333,7 +336,7 @@ class MainWindow:
         """Create manual detection section"""
         manual_frame = tk.LabelFrame(self.main_container, text=t("manual_detection"), padx=5, pady=5)
         self.themeable_labels.append(manual_frame)
-        manual_frame.pack(fill="x", expand=False, padx=5, pady=0)
+        manual_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
         # Grid layout configuration
         manual_frame.columnconfigure(1, weight=1)
@@ -465,7 +468,7 @@ class MainWindow:
         """Create crop actions section"""
         self.crop_frame = tk.LabelFrame(self.main_container, text=t("crop_actions"), padx=5, pady=5)
         self.themeable_labels.append(self.crop_frame)
-        self.crop_frame.pack(fill="x", expand=False, padx=5, pady=0)
+        self.crop_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
         self.l_measure_margin_second = tk.Label(self.crop_frame, text=t("measure_margin_second"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_measure_margin_second)
@@ -489,7 +492,7 @@ class MainWindow:
         """Create process actions section"""
         self.process_frame = tk.LabelFrame(self.main_container, text=t("process_actions"), padx=5, pady=5)
         self.themeable_labels.append(self.process_frame)
-        self.process_frame.pack(fill="x", expand=False, padx=5, pady=0)
+        self.process_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
         self.l_start_second = tk.Label(self.process_frame, text=t("start_second"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_start_second)
