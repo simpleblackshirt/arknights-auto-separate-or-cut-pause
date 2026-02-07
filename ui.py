@@ -177,7 +177,13 @@ class MainWindow:
         The border_frame should be used for layout (grid/pack).
         """
         theme = THEMES[self.get_effective_theme()]
-        border_frame = tk.Frame(parent, bg=theme["button_bg"])
+        border_frame = tk.Frame(
+            parent,
+            bg=theme["button_bg"],
+            highlightbackground=theme["border_color"],
+            highlightcolor=theme["border_color"],
+            highlightthickness=1
+        )
         self.themeable_frames.append(border_frame)
         self.button_border_frames.append(border_frame)
 
@@ -743,6 +749,92 @@ class MainWindow:
         msg_label = tk.Label(
             container,
             text=t("settings_saved"),
+            font=FONT_LABEL,
+            bg=theme["bg"],
+            fg=theme["fg"]
+        )
+        msg_label.pack(fill="both", expand=True)
+
+        # OK button with theme
+        ok_btn_frame, ok_btn = self._create_bordered_button(
+            container, text=t("ok")
+        )
+        ok_btn_frame.pack(pady=(10, 0))
+        ok_btn.config(command=popup.destroy)
+
+        # Center popup on parent
+        popup.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - popup.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - popup.winfo_height()) // 2
+        popup.geometry(f"+{x}+{y}")
+
+    def show_error_popup(self, message):
+        """Show an error message in a themed popup window (modal)"""
+        popup = tk.Toplevel(self.root)
+        popup.title(t("error_title"))
+        popup.geometry("350x140")
+
+        # Make popup modal
+        popup.transient(self.root)
+        popup.grab_set()
+
+        # Get current theme colors
+        theme = THEMES[self.get_effective_theme()]
+
+        # Configure popup background
+        popup.configure(bg=theme["bg"])
+
+        # Container frame with theme
+        container = tk.Frame(popup, bg=theme["bg"], padx=20, pady=20)
+        container.pack(fill="both", expand=True)
+
+        # Error message label with theme
+        msg_label = tk.Label(
+            container,
+            text=message,
+            font=FONT_LABEL,
+            bg=theme["bg"],
+            fg=theme["fg"]
+        )
+        msg_label.pack(fill="both", expand=True)
+
+        # Close button with theme
+        close_btn_frame, close_btn = self._create_bordered_button(
+            container, text=t("close")
+        )
+        close_btn_frame.pack(pady=(10, 0))
+        close_btn.config(command=popup.destroy)
+
+        # Center popup on parent
+        popup.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - popup.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - popup.winfo_height()) // 2
+        popup.geometry(f"+{x}+{y}")
+
+    def show_info_popup(self, message, title=None):
+        """Show an info message in a themed popup window (modal)"""
+        popup = tk.Toplevel(self.root)
+        popup.title(title if title else t("info_title"))
+        popup.geometry("350x140")
+
+        # Make popup modal
+        popup.transient(self.root)
+        popup.grab_set()
+
+        # Get current theme colors
+        theme = THEMES[self.get_effective_theme()]
+
+        # Configure popup background
+        popup.configure(bg=theme["bg"])
+
+        # Container frame with theme
+        container = tk.Frame(popup, bg=theme["bg"], padx=20, pady=20)
+        container.pack(fill="both", expand=True)
+
+        # Info message label with theme
+        msg_label = tk.Label(
+            container,
+            text=message,
             font=FONT_LABEL,
             bg=theme["bg"],
             fg=theme["fg"]

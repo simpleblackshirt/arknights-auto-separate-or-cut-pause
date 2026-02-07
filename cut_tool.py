@@ -1,6 +1,5 @@
 from tkinter import *
 from tkinter import ttk
-from tkinter import messagebox
 from tkinter import font as tkFont
 import os
 import cv2
@@ -129,14 +128,14 @@ def update_all_text():
     """Update all GUI text elements based on current language"""
     ui.update_all_text()
 
-def check_margin(top_margin, bottom_margin, left_margin, right_margin):
+def check_margin(ui, top_margin, bottom_margin, left_margin, right_margin):
     if not (
         top_margin.replace("-", "").isdigit()
         and bottom_margin.replace("-", "").isdigit()
         and left_margin.replace("-", "").isdigit()
         and right_margin.replace("-", "").isdigit()
     ):
-        messagebox.showerror(title=t("error_title"), message=t("margin_param_error"))
+        ui.show_error_popup(t("margin_param_error"))
         return False
     if (
         int(top_margin) > MARGIN_TH
@@ -144,82 +143,82 @@ def check_margin(top_margin, bottom_margin, left_margin, right_margin):
         or int(left_margin) > MARGIN_TH
         or int(right_margin) > MARGIN_TH
     ):
-        messagebox.showerror(title=t("error_title"), message=t("margin_too_large"))
+        ui.show_error_popup(t("margin_too_large"))
         return False
     return True
 
-def check_crop(top_margin, bottom_margin, left_margin, right_margin, video_name):
+def check_crop(ui, top_margin, bottom_margin, left_margin, right_margin, video_name):
     if (
         int(top_margin) < 0
         or int(bottom_margin) < 0
         or int(left_margin) < 0
         or int(right_margin) < 0
     ):
-        messagebox.showerror(title=t("error_title"), message=t("negative_margin_error"))
+        ui.show_error_popup(t("negative_margin_error"))
         return False
     if video_name == "aftercrop.mp4":
-        messagebox.showerror(title=t("error_title"), message=t("aftercrop_name_error"))
+        ui.show_error_popup(t("aftercrop_name_error"))
         return False
     if os.path.exists(path + "/" + video_name):
-        messagebox.showerror(title=t("error_title"), message=t("duplicate_file_error"))
+        ui.show_error_popup(t("duplicate_file_error"))
         return False
     return True
 
-def check_start_end_seconds(start_second, end_second):
+def check_start_end_seconds(ui, start_second, end_second):
     if not (start_second.isdigit() and end_second.isdigit()):
-        messagebox.showerror(title=t("error_title"), message=t("start_end_param_error"))
+        ui.show_error_popup(t("start_end_param_error"))
         return False
     if int(start_second) >= int(end_second):
-        messagebox.showerror(title=t("error_title"), message=t("end_must_be_greater"))
+        ui.show_error_popup(t("end_must_be_greater"))
         return False
     return True
 
-def check_file_and_return_path():
+def check_file_and_return_path(ui):
     file_cnt = 0
     working_folder_list = os.listdir(working_path)
     for lists in working_folder_list:
         file_cnt += 1
     if file_cnt == 1:
         if working_folder_list[0].startswith("out"):
-            messagebox.showerror(title=t("error_title"), message=t("no_out_prefix"))
+            ui.show_error_popup(t("no_out_prefix"))
             return False
         return working_path + working_folder_list[0]
-    messagebox.showerror(title=t("error_title"), message=t("single_file_required"))
+    ui.show_error_popup(t("single_file_required"))
     return False
 
-def check_measure_margin_second(measure_margin_second):
+def check_measure_margin_second(ui, measure_margin_second):
     if not measure_margin_second.replace(".", "", 1).isdigit():
-        messagebox.showerror(title=t("error_title"), message=t("measure_margin_error"))
+        ui.show_error_popup(t("measure_margin_error"))
         return False
     return True
 
-def check_set_second(set_second):
+def check_set_second(ui, set_second):
     if not set_second.replace(".", "", 1).isdigit():
-        messagebox.showerror(title=t("error_title"), message=t("manual_set_second_error"))
+        ui.show_error_popup(t("manual_set_second_error"))
         return False
-    return True  
-    
-def check_measure_margin_second_2(measure_margin_second, fps, frame_cnt):
+    return True
+
+def check_measure_margin_second_2(ui, measure_margin_second, fps, frame_cnt):
     if measure_margin_second >= frame_cnt / fps:
-        messagebox.showerror(title=t("error_title"), message=t("margin_exceeds_length"))
+        ui.show_error_popup(t("margin_exceeds_length"))
         return False
     return True
 
-def check_thread_num(thread_num):
+def check_thread_num(ui, thread_num):
     if not(thread_num.isdigit() and 1 <= int(thread_num) <= 16):
-        messagebox.showerror(title=t("error_title"), message=t("thread_num_error"))
+        ui.show_error_popup(t("thread_num_error"))
         return False
     return True
 
-def check_ignore_frame_cnt(ignore_frame_cnt):
+def check_ignore_frame_cnt(ui, ignore_frame_cnt):
     if not(ignore_frame_cnt.isdigit()):
-        messagebox.showerror(title=t("error_title"), message=t("ignore_frame_error"))
+        ui.show_error_popup(t("ignore_frame_error"))
         return False
     return True
 
-def check_coordinates_setting():
+def check_coordinates_setting(ui):
     if not(len(array_1) == 4 and len(array_2) == 8):
-        messagebox.showerror(title=t("error_title"), message=t("no_detection_points"))
+        ui.show_error_popup(t("no_detection_points"))
         return False
     return True
 
@@ -313,13 +312,13 @@ def clear_video_cache():
     global _video_metadata_cache
     _video_metadata_cache.clear()
 
-def measure_margin(measure_margin_second):
-    if check_measure_margin_second(measure_margin_second):
-        video_path = check_file_and_return_path()
+def measure_margin(ui, measure_margin_second):
+    if check_measure_margin_second(ui, measure_margin_second):
+        video_path = check_file_and_return_path(ui)
         if video_path:
             fps, lgt, hgt, frame_cnt = get_video_info(video_path)
             if check_measure_margin_second_2(
-                float(measure_margin_second), fps, frame_cnt
+                ui, float(measure_margin_second), fps, frame_cnt
             ):
                 cap = cv2.VideoCapture(video_path)
                 top_margin = MARGIN_TH
@@ -408,22 +407,20 @@ def measure_margin(measure_margin_second):
                     or left_margin >= MARGIN_TH
                     or right_margin >= MARGIN_TH
                 ):
-                    messagebox.showerror(
-                        title=t("error_title"), message=t("calculation_error")
-                    )
+                    ui.show_error_popup(t("calculation_error"))
                     return False
                 set_margin(top_margin, bottom_margin, left_margin, right_margin)
-                messagebox.showinfo(title=t("info_title"), message=t("margin_filled"))
+                ui.show_info_popup(t("margin_filled"))
                 return True
             else:
                 return False
 
              
-def cut_with_crop(mode, start_second, end_second, thread_num, measure_margin_second, ignore_frame_cnt):
-    if check_ignore_frame_cnt(ignore_frame_cnt):
-        if check_thread_num(thread_num):
-            if check_start_end_seconds(start_second, end_second):
-                if measure_margin(measure_margin_second):
+def cut_with_crop(ui, mode, start_second, end_second, thread_num, measure_margin_second, ignore_frame_cnt):
+    if check_ignore_frame_cnt(ui, ignore_frame_cnt):
+        if check_thread_num(ui, thread_num):
+            if check_start_end_seconds(ui, start_second, end_second):
+                if measure_margin(ui, measure_margin_second):
                     # Cache margin values before crop (performance optimization)
                     cached_top = ui.e_top_margin.get()
                     cached_bottom = ui.e_bottom_margin.get()
@@ -431,6 +428,7 @@ def cut_with_crop(mode, start_second, end_second, thread_num, measure_margin_sec
                     cached_right = ui.e_right_margin.get()
 
                     if crop(
+                        ui,
                         cached_top,
                         cached_bottom,
                         cached_left,
@@ -439,6 +437,7 @@ def cut_with_crop(mode, start_second, end_second, thread_num, measure_margin_sec
                         # Restore cached margin values instead of calling measure_margin again
                         set_margin(cached_top, cached_bottom, cached_left, cached_right)
                         cut_without_crop(
+                            ui,
                             mode,
                             cached_top,
                             cached_bottom,
@@ -450,13 +449,13 @@ def cut_with_crop(mode, start_second, end_second, thread_num, measure_margin_sec
                             ignore_frame_cnt
                         )
 
-def crop(top_margin, bottom_margin, left_margin, right_margin):
-    video_path = check_file_and_return_path()
+def crop(ui, top_margin, bottom_margin, left_margin, right_margin):
+    video_path = check_file_and_return_path(ui)
     if video_path:
-        if check_margin(top_margin, bottom_margin, left_margin, right_margin):
+        if check_margin(ui, top_margin, bottom_margin, left_margin, right_margin):
             orig_name = os.listdir(working_path)[0]
             if check_crop(
-                top_margin, bottom_margin, left_margin, right_margin, orig_name
+                ui, top_margin, bottom_margin, left_margin, right_margin, orig_name
             ):
                 cap = cv2.VideoCapture(video_path)
                 lgt = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) 
@@ -494,8 +493,8 @@ def show_desc():
     ui.show_description_labels()
 
 def save_settings(ui, mode_i, top_margin, bottom_margin, left_margin, right_margin, thread_num, ignore_frame_cnt):
-    if check_thread_num(thread_num):
-        if check_margin(top_margin, bottom_margin, left_margin, right_margin):
+    if check_thread_num(ui, thread_num):
+        if check_margin(ui, top_margin, bottom_margin, left_margin, right_margin):
             with open(path + "/settings.txt", "w+") as f:  # Settings
                 f.write(str(mode_i) + "\n")
                 f.write(top_margin + "\n")
@@ -507,8 +506,8 @@ def save_settings(ui, mode_i, top_margin, bottom_margin, left_margin, right_marg
                 f.write(str(current_language) + "\n")  # Save language preference
             ui.show_settings_saved_popup()
 
-def manual_set_save():
-    if check_coordinates_setting():
+def manual_set_save(ui):
+    if check_coordinates_setting(ui):
         with open(path + "/detection_points.txt", "w+") as f:  # Save detection points
             f.write(str(array_1[0][0]) + "\n")
             f.write(str(array_1[0][1]) + "\n")
@@ -531,29 +530,29 @@ def manual_set_save():
             f.write(str(array_2[5][1]) + "\n")
             f.write(str(array_2[6][1]) + "\n")
             f.write(str(array_2[7][1]) + "\n")
-        messagebox.showinfo(title=t("info_title"), message=t("detection_points_saved"))
+        ui.show_info_popup(t("detection_points_saved"))
 
 def cut_without_crop(
-    mode, top_margin, bottom_margin, left_margin, right_margin, start_second, end_second, thread_num, ignore_frame_cnt
+    ui, mode, top_margin, bottom_margin, left_margin, right_margin, start_second, end_second, thread_num, ignore_frame_cnt
 ):
-    if ui.e_manual_set_or_not.current() == 0 or check_coordinates_setting():
-        if check_ignore_frame_cnt(ignore_frame_cnt):
-            if check_thread_num(thread_num):
-                if check_start_end_seconds(start_second, end_second):
-                    video_path = check_file_and_return_path()
+    if ui.e_manual_set_or_not.current() == 0 or check_coordinates_setting(ui):
+        if check_ignore_frame_cnt(ui, ignore_frame_cnt):
+            if check_thread_num(ui, thread_num):
+                if check_start_end_seconds(ui, start_second, end_second):
+                    video_path = check_file_and_return_path(ui)
                     if video_path:
                         cap = cv2.VideoCapture(video_path)
                         frame_cnt = cap.get(cv2.CAP_PROP_FRAME_COUNT)
                         fps = cap.get(cv2.CAP_PROP_FPS)
                         cap.release()
-                        if check_margin(top_margin, bottom_margin, left_margin, right_margin):
+                        if check_margin(ui, top_margin, bottom_margin, left_margin, right_margin):
                             if frame_cnt / int(fps) <= int(end_second):
-                                messagebox.showerror(title=t("error_title"), message=t("end_exceeds_video"))
+                                ui.show_error_popup(t("end_exceeds_video"))
                             else:
                                 if int(fps) != fps:  # warning only not error
-                                    messagebox.showinfo(
+                                    ui.show_info_popup(
+                                        t("fps_warning"),
                                         title=t("warning_title"),
-                                        message=t("fps_warning"),
                                     )
                                 tc = TimeCost()
                                 tc.time_start(t("log_timing_full_process"))
@@ -593,11 +592,11 @@ def jump_to_tutorial(event):
     webbrowser.open("https://www.bilibili.com/video/BV1qg411r7dV", new=0)
 
 
-def set_coordinates_sample():
+def set_coordinates_sample(ui):
     img2 = cv2.imread('sample2.jpg')
     img = cv2.imread('sample1.jpg')
     if img2 is None or img is None:
-        messagebox.showerror(title=t("error_title"), message=t("sample_image_missing"))
+        ui.show_error_popup(t("sample_image_missing"))
     else:
         cv2.namedWindow("Sample_2", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Sample_2", (960,540))
@@ -607,12 +606,12 @@ def set_coordinates_sample():
         cv2.resizeWindow("Sample_1", (960,540))
         cv2.imshow('Sample_1', img)
 
-def set_coordinates_manually(set_second_1, set_second_2):
+def set_coordinates_manually(ui, set_second_1, set_second_2):
     array_1.clear()
     array_2.clear()
-    if check_set_second(set_second_1):
-        if check_set_second(set_second_2):
-            video_path = check_file_and_return_path()
+    if check_set_second(ui, set_second_1):
+        if check_set_second(ui, set_second_2):
+            video_path = check_file_and_return_path(ui)
             if video_path:
                 fps, lgt, hgt, frame_cnt = get_video_info(video_path)
                 cap = cv2.VideoCapture(video_path)
@@ -631,10 +630,10 @@ def set_coordinates_manually(set_second_1, set_second_2):
                     cv2.setMouseCallback('Frame_1', mouse_callback_1, array_1)
 
                 else:
-                    messagebox.showerror(title=t("error_title"), message=t("frame_read_failed"))
+                    ui.show_error_popup(t("frame_read_failed"))
                 cv2.waitKey()
                 if len(array_1) < 4:
-                    messagebox.showerror(title=t("error_title"), message=t("not_4_points"))
+                    ui.show_error_popup(t("not_4_points"))
                     if cv2.getWindowProperty('Frame_1', cv2.WND_PROP_VISIBLE):
                         cv2.destroyWindow('Frame_1')
                 else:
@@ -653,12 +652,12 @@ def set_coordinates_manually(set_second_1, set_second_2):
                         cv2.setMouseCallback('Frame_2', mouse_callback_2, array_2)
 
                     else:
-                        messagebox.showerror(title=t("error_title"), message=t("frame_read_failed"))
+                        ui.show_error_popup(t("frame_read_failed"))
                     cv2.waitKey()
                     if len(array_2) < 8:
-                        messagebox.showerror(title=t("error_title"), message=t("not_8_points"))
+                        ui.show_error_popup(t("not_8_points"))
                         if cv2.getWindowProperty('Frame_2', cv2.WND_PROP_VISIBLE):
-                            cv2.destroyWindow('Frame_2')                                                
+                            cv2.destroyWindow('Frame_2')
                 set_coordinates_labels()
                         
 def mouse_callback_1(event, x, y, flags, param):
@@ -1594,11 +1593,12 @@ ui.b_save_settings.config(
 )
 
 ui.b_measure_margin.config(
-    command=lambda: measure_margin(ui.e_measure_margin_second.get())
+    command=lambda: measure_margin(ui, ui.e_measure_margin_second.get())
 )
 
 ui.b_crop.config(
     command=lambda: crop(
+        ui,
         ui.e_top_margin.get(),
         ui.e_bottom_margin.get(),
         ui.e_left_margin.get(),
@@ -1608,6 +1608,7 @@ ui.b_crop.config(
 
 ui.b_cut_without_crop.config(
     command=lambda: cut_without_crop(
+        ui,
         ui.e_mode.current(),
         ui.e_top_margin.get(),
         ui.e_bottom_margin.get(),
@@ -1622,6 +1623,7 @@ ui.b_cut_without_crop.config(
 
 ui.b_cut_with_crop.config(
     command=lambda: cut_with_crop(
+        ui,
         ui.e_mode.current(),
         ui.e_start_second.get(),
         ui.e_end_second.get(),
@@ -1632,15 +1634,15 @@ ui.b_cut_with_crop.config(
 )
 
 ui.b_manual_set.config(
-    command=lambda: set_coordinates_manually(ui.e_manual_set_second_1.get(), ui.e_manual_set_second_2.get())
+    command=lambda: set_coordinates_manually(ui, ui.e_manual_set_second_1.get(), ui.e_manual_set_second_2.get())
 )
 
 ui.b_manual_set_sample.config(
-    command=lambda: set_coordinates_sample()
+    command=lambda: set_coordinates_sample(ui)
 )
 
 ui.b_manual_set_save.config(
-    command=lambda: manual_set_save()
+    command=lambda: manual_set_save(ui)
 )
 
 # Load settings if file exists
