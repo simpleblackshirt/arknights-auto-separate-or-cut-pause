@@ -252,26 +252,28 @@ class MainWindow:
         self.l_text_working_path.grid(row=0, column=0, sticky="e", padx=10, pady=5)
         self.l_working_path.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
-        # Language and theme row
-        self.l_language = tk.Label(header_frame, text=t("language"), font=FONT_LABEL)
+        # Language and theme row - place in their own frame for proper alignment
+        lang_theme_frame = tk.Frame(header_frame)
+        self.themeable_frames.append(lang_theme_frame)
+        lang_theme_frame.grid(row=1, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+
+        self.l_language = tk.Label(lang_theme_frame, text=t("language"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_language)
-        self.e_language = ttk.Combobox(header_frame, values=["中文", "English"], font=FONT_NORMAL, width=10)
+        self.e_language = ttk.Combobox(lang_theme_frame, values=["中文", "English"], font=FONT_NORMAL, width=10)
         self.e_language.current(0 if self.default_language == "cn" else 1)
 
-        self.l_theme = tk.Label(header_frame, text=t("theme"), font=FONT_LABEL)
+        self.l_theme = tk.Label(lang_theme_frame, text=t("theme"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_theme)
         self.e_theme = ttk.Combobox(
-            header_frame, values=[t("auto"), t("light"), t("dark")], font=FONT_NORMAL, width=10
+            lang_theme_frame, values=[t("auto"), t("light"), t("dark")], font=FONT_NORMAL, width=10
         )
         self.e_theme.current(0)
         self.e_theme.bind("<<ComboboxSelected>>", self.change_theme)
 
-        self.l_language.grid(row=1, column=0, sticky="e", padx=10, pady=5)
-        self.e_language.grid(row=1, column=1, sticky="w", padx=5, pady=5)
-        self.l_theme.grid(row=1, column=2, sticky="e", padx=10, pady=5)
-        self.e_theme.grid(row=1, column=3, sticky="w", padx=5, pady=5)
-
-        header_frame.columnconfigure(1, weight=1)
+        self.l_language.grid(row=0, column=0, sticky="e", padx=(0, 10), pady=5)
+        self.e_language.grid(row=0, column=1, sticky="w", padx=(0, 20), pady=5)
+        self.l_theme.grid(row=0, column=2, sticky="e", padx=(0, 10), pady=5)
+        self.e_theme.grid(row=0, column=3, sticky="w", padx=0, pady=5)
 
     def _create_mode_section(self):
         """Create mode selection section"""
@@ -353,6 +355,10 @@ class MainWindow:
         self.l_manual_set_or_not.grid(row=0, column=0, sticky="e", padx=10, pady=5)
         self.e_manual_set_or_not.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
+        self.l_frame_desc = tk.Label(manual_frame, text=f"({t('refer_sample')})", font=FONT_LABEL)
+        self.themeable_labels.append(self.l_frame_desc)
+        self.l_frame_desc.grid(row=0, column=2, sticky="w", padx=(10, 0), pady=5)
+
         # Row 1: Second inputs
         self.l_manual_set_second = tk.Label(manual_frame, text=t("manual_set_second"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_manual_set_second)
@@ -378,28 +384,23 @@ class MainWindow:
         self.b_manual_set_sample_frame.grid(row=2, column=1, sticky="ew", padx=5, pady=5)
         self.b_manual_set_save_frame.grid(row=2, column=2, sticky="ew", padx=5, pady=5)
 
-        # Row 3: Description label
-        self.l_frame_desc = tk.Label(manual_frame, text=t("refer_sample"), font=FONT_LABEL)
-        self.themeable_labels.append(self.l_frame_desc)
-        self.l_frame_desc.grid(row=3, column=0, columnspan=3, sticky="w", padx=10, pady=2)
-
-        # Row 4: Frame 1 description + array 1 coordinates (4 points)
+        # Row 3: Frame 1 description + array 1 coordinates (4 points)
         self.l_frame_1_desc = tk.Label(manual_frame, text=t("frame_1_desc"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_frame_1_desc)
-        self.l_frame_1_desc.grid(row=4, column=0, sticky="w", padx=10, pady=2)
+        self.l_frame_1_desc.grid(row=3, column=0, sticky="w", padx=10, pady=2)
 
         self.l_array_1_coords = tk.Label(manual_frame, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4)", font=FONT_LABEL)
         self.themeable_labels.append(self.l_array_1_coords)
-        self.l_array_1_coords.grid(row=4, column=1, columnspan=2, sticky="w", padx=10, pady=2)
+        self.l_array_1_coords.grid(row=3, column=1, columnspan=2, sticky="w", padx=10, pady=2)
 
-        # Row 5: Frame 2 description + array 2 coordinates (8 points)
+        # Row 4: Frame 2 description + array 2 coordinates (8 points)
         self.l_frame_2_desc = tk.Label(manual_frame, text=t("frame_2_desc"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_frame_2_desc)
-        self.l_frame_2_desc.grid(row=5, column=0, sticky="w", padx=10, pady=2)
+        self.l_frame_2_desc.grid(row=4, column=0, sticky="w", padx=10, pady=2)
 
         self.l_array_2_coords = tk.Label(manual_frame, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x5, y5), (x6, y6), (x7, y7), (x8, y8)", font=FONT_LABEL)
         self.themeable_labels.append(self.l_array_2_coords)
-        self.l_array_2_coords.grid(row=5, column=1, columnspan=2, sticky="w", padx=10, pady=2)
+        self.l_array_2_coords.grid(row=4, column=1, columnspan=2, sticky="w", padx=10, pady=2)
 
     def _create_margin_section(self, parent):
         """Create margin settings section"""
