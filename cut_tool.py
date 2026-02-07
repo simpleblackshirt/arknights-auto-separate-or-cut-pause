@@ -228,8 +228,8 @@ def set_ignore_frame_cnt(ignore_frame_cnt):
     ui.set_ignore_frame_cnt(ignore_frame_cnt)    
 
 def set_coordinates():
-    if os.path.exists(path + "/检测点.txt"):
-        with open(path + "/检测点.txt") as f:  # Detection points
+    if os.path.exists(path + "/detection_points.txt"):
+        with open(path + "/detection_points.txt") as f:  # Detection points
             for i in range(4):
                 coord = [int(f.readline()) , int(f.readline())]
                 array_1.append(coord)
@@ -491,7 +491,7 @@ def show_desc():
 def save_settings(mode_i, top_margin, bottom_margin, left_margin, right_margin, thread_num, ignore_frame_cnt):
     if check_thread_num(thread_num):
         if check_margin(top_margin, bottom_margin, left_margin, right_margin):
-            with open(path + "/设置.txt", "w+") as f:  # Settings
+            with open(path + "/settings.txt", "w+") as f:  # Settings
                 f.write(str(mode_i) + "\n")
                 f.write(top_margin + "\n")
                 f.write(bottom_margin + "\n")
@@ -504,7 +504,7 @@ def save_settings(mode_i, top_margin, bottom_margin, left_margin, right_margin, 
 
 def manual_set_save():
     if check_coordinates_setting():
-        with open(path + "/检测点.txt", "w+") as f:  # Save detection points
+        with open(path + "/detection_points.txt", "w+") as f:  # Save detection points
             f.write(str(array_1[0][0]) + "\n")
             f.write(str(array_1[0][1]) + "\n")
             f.write(str(array_1[1][0]) + "\n")
@@ -619,7 +619,7 @@ def set_coordinates_manually(set_second_1, set_second_2):
 
                 if ret:
                     cv2.namedWindow("Frame_1", cv2.WINDOW_NORMAL)
-                    messagebox.showinfo(title=t("info_title"), message=t("click_4_points"))
+                    ui.show_instruction_popup(t("click_4_points"), button_text="proceed")
                     cv2.setWindowProperty("Frame_1", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                     cv2.imshow('Frame_1', frame)
 
@@ -641,7 +641,7 @@ def set_coordinates_manually(set_second_1, set_second_2):
 
                     if ret:
                         cv2.namedWindow("Frame_2", cv2.WINDOW_NORMAL)
-                        messagebox.showinfo(title=t("info_title"), message=t("click_8_points"))
+                        ui.show_instruction_popup(t("click_8_points"), button_text="proceed")
                         cv2.setWindowProperty("Frame_2", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                         cv2.imshow('Frame_2', frame)
 
@@ -1638,8 +1638,8 @@ ui.b_manual_set_save.config(
 )
 
 # Load settings if file exists
-if os.path.exists(path + "/设置.txt"):
-    with open(path + "/设置.txt") as f:
+if os.path.exists(path + "/settings.txt"):
+    with open(path + "/settings.txt") as f:
         ui.e_mode.current(int(f.readline()))
         set_margin(
             int(f.readline()), int(f.readline()), int(f.readline()), int(f.readline())

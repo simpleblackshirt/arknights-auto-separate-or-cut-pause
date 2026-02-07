@@ -193,12 +193,45 @@ class MainWindow:
 
         return border_frame, button
 
+    def _create_info_button(self, parent, command):
+        """Create a circular info button with 'i' text.
+        Returns a tuple of (frame, label). The frame should be used for layout.
+        """
+        theme = THEMES[self.get_effective_theme()]
+        size = 20
+
+        # Frame with circular border effect
+        frame = tk.Frame(parent, width=size, height=size, bg=theme["bg"])
+        frame.pack_propagate(False)
+
+        # Circular effect using border (not perfect but works)
+        border = tk.Frame(frame, width=size-2, height=size-2,
+                         bg=theme["border_color"],
+                         highlightbackground=theme["border_color"],
+                         highlightthickness=1)
+        border.pack_propagate(False)
+        border.pack()  # THIS WAS MISSING - pack the border into the frame
+
+        # Info label
+        info_label = tk.Label(border, text="i", font=("TkDefaultFont", 10, "bold"),
+                             bg=theme["button_bg"], fg=theme["fg"],
+                             cursor="hand2")
+        info_label.pack(fill="both", expand=True)
+        info_label.bind("<Button-1>", lambda _: command())
+
+        self.themeable_frames.append(frame)
+        self.themeable_frames.append(border)
+        self.themeable_labels.append(info_label)
+        self.button_border_frames.append(border)
+
+        return frame, info_label
+
     def _create_widgets(self):
         """Create all UI widgets"""
         # Window setup
         self.root.title(t("window_title"))
-        self.root.geometry("820x810+150+150")
-        self.root.minsize(820, 810)
+        self.root.geometry("845x810+150+150")
+        self.root.minsize(845, 810)
 
         # Set default combobox listbox font
         self.root.option_add("*TCombobox*Listbox.font", FONT_NORMAL)
@@ -374,18 +407,44 @@ class MainWindow:
         self.themeable_labels.append(self.l_frame_1_desc)
         self.l_frame_1_desc.grid(row=3, column=0, sticky="w", padx=10, pady=2)
 
-        self.l_array_1_coords = tk.Label(manual_frame, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4)", font=FONT_LABEL)
+        # Container for coordinate label + info button
+        coord_1_container = tk.Frame(manual_frame)
+        self.themeable_frames.append(coord_1_container)
+
+        self.l_array_1_coords = tk.Label(coord_1_container, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4)", font=FONT_LABEL)
         self.themeable_labels.append(self.l_array_1_coords)
-        self.l_array_1_coords.grid(row=3, column=1, columnspan=2, sticky="w", padx=10, pady=2)
+        self.l_array_1_coords.pack(side="left")
+
+        # Info button for 4 points
+        info_1_btn_frame, _ = self._create_info_button(
+            coord_1_container,
+            command=lambda: self.show_instruction_popup(t("click_4_points"))
+        )
+        info_1_btn_frame.pack(side="left", padx=(5, 0))
+
+        coord_1_container.grid(row=3, column=1, columnspan=2, sticky="w", padx=10, pady=2)
 
         # Row 4: Frame 2 description + array 2 coordinates (8 points)
         self.l_frame_2_desc = tk.Label(manual_frame, text=t("frame_2_desc"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_frame_2_desc)
         self.l_frame_2_desc.grid(row=4, column=0, sticky="w", padx=10, pady=2)
 
-        self.l_array_2_coords = tk.Label(manual_frame, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x5, y5), (x6, y6), (x7, y7), (x8, y8)", font=FONT_LABEL)
+        # Container for coordinate label + info button
+        coord_2_container = tk.Frame(manual_frame)
+        self.themeable_frames.append(coord_2_container)
+
+        self.l_array_2_coords = tk.Label(coord_2_container, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x5, y5), (x6, y6), (x7, y7), (x8, y8)", font=FONT_LABEL)
         self.themeable_labels.append(self.l_array_2_coords)
-        self.l_array_2_coords.grid(row=4, column=1, columnspan=2, sticky="w", padx=10, pady=2)
+        self.l_array_2_coords.pack(side="left")
+
+        # Info button for 8 points
+        info_2_btn_frame, _ = self._create_info_button(
+            coord_2_container,
+            command=lambda: self.show_instruction_popup(t("click_8_points"))
+        )
+        info_2_btn_frame.pack(side="left", padx=(5, 0))
+
+        coord_2_container.grid(row=4, column=1, columnspan=2, sticky="w", padx=10, pady=2)
 
     def _create_margin_section(self, parent):
         """Create margin settings section"""
@@ -604,6 +663,61 @@ class MainWindow:
         )
         close_btn.config(command=popup.destroy)
         close_btn_frame.pack(pady=(10, 0))
+
+    def show_instruction_popup(self, instruction_text, button_text="close"):
+        """Show instruction text in a themed popup window (modal)
+
+        Args:
+            instruction_text: The text to display
+            button_text: The translation key for the button text ("close" or "proceed")
+        """
+        # Create popup window
+        popup = tk.Toplevel(self.root)
+        popup.title(t("info_title"))
+        popup.geometry("540x280")
+        popup.resizable(False, False)
+
+        # Make popup modal (blocking)
+        popup.transient(self.root)
+        popup.grab_set()
+
+        # Get current theme colors
+        theme = THEMES[self.get_effective_theme()]
+
+        # Configure popup background
+        popup.configure(bg=theme["bg"])
+
+        # Container frame with less padding
+        container = tk.Frame(popup, bg=theme["bg"], padx=15, pady=15)
+        container.pack(fill="both", expand=True)
+
+        # Instruction label
+        instruction_label = tk.Label(
+            container,
+            text=instruction_text,
+            font=FONT_LABEL,
+            justify="left",
+            bg=theme["bg"],
+            fg=theme["fg"],
+            wraplength=460
+        )
+        instruction_label.pack(fill="both", expand=True)
+
+        # Action button
+        action_btn_frame, action_btn = self._create_bordered_button(
+            container, text=t(button_text)
+        )
+        action_btn.config(command=popup.destroy)
+        action_btn_frame.pack(pady=(10, 0))
+
+        # Center popup on parent and wait for close
+        popup.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - popup.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - popup.winfo_height()) // 2
+        popup.geometry(f"+{x}+{y}")
+
+        # Wait for popup to be closed (makes it truly modal)
+        popup.wait_window()
 
     def update_all_text(self):
         """Update all widget text when language changes"""
