@@ -41,7 +41,7 @@ FOURCC = cv2.VideoWriter_fourcc("m", "p", "4", "v")
 DEFAULT_THREAD_NUM = 4
 DEFAULT_IGNORE_FRAME_CNT = 0
 SHOW_PROGRESS_SEG = 5
-DEFAULT_LANGUAGE = "en"  # Default language: "cn" for Chinese, "en" for English, "ja" for Japanese
+DEFAULT_LANGUAGE = "cn"  # Default language: "cn" for Chinese, "en" for English, "ja" for Japanese
 
 P_M_Y_CO = 0.074             #(right top) pause middle coefficient
 P_M_X_CO = 0.112

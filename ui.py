@@ -360,34 +360,34 @@ class MainWindow:
 
     def _create_manual_detection_section(self):
         """Create manual detection section"""
-        manual_frame = tk.LabelFrame(self.main_container, text=t("manual_detection"), padx=5, pady=5)
-        self.themeable_labels.append(manual_frame)
-        manual_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        self.manual_frame = tk.LabelFrame(self.main_container, text=t("manual_detection"), padx=5, pady=5)
+        self.themeable_labels.append(self.manual_frame)
+        self.manual_frame.pack(fill="x", expand=False, padx=5, pady=5)
 
         # Grid layout configuration
-        manual_frame.columnconfigure(1, weight=1)
-        manual_frame.columnconfigure(2, weight=1)
+        self.manual_frame.columnconfigure(1, weight=1)
+        self.manual_frame.columnconfigure(2, weight=1)
 
         # Row 0: Mode selector
-        self.l_manual_set_or_not = tk.Label(manual_frame, text=t("manual_set_or_not"), font=FONT_LABEL)
+        self.l_manual_set_or_not = tk.Label(self.manual_frame, text=t("manual_set_or_not"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_manual_set_or_not)
         self.e_manual_set_or_not = ttk.Combobox(
-            manual_frame, values=(t("no"), t("yes")), font=FONT_NORMAL, width=10
+            self.manual_frame, values=(t("no"), t("yes")), font=FONT_NORMAL, width=10
         )
         self.e_manual_set_or_not.current(0)
 
         self.l_manual_set_or_not.grid(row=0, column=0, sticky="e", padx=10, pady=5)
         self.e_manual_set_or_not.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
-        self.l_frame_desc = tk.Label(manual_frame, text=f"({t('refer_sample')})", font=FONT_LABEL)
+        self.l_frame_desc = tk.Label(self.manual_frame, text=f"({t('refer_sample')})", font=FONT_LABEL)
         self.themeable_labels.append(self.l_frame_desc)
         self.l_frame_desc.grid(row=0, column=2, sticky="w", padx=(10, 0), pady=5)
 
         # Row 1: Second inputs
-        self.l_manual_set_second = tk.Label(manual_frame, text=t("manual_set_second"), font=FONT_LABEL)
+        self.l_manual_set_second = tk.Label(self.manual_frame, text=t("manual_set_second"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_manual_set_second)
-        self.e_manual_set_second_1 = tk.Entry(manual_frame, font=FONT_NORMAL, width=10)
-        self.e_manual_set_second_2 = tk.Entry(manual_frame, font=FONT_NORMAL, width=10)
+        self.e_manual_set_second_1 = tk.Entry(self.manual_frame, font=FONT_NORMAL, width=10)
+        self.e_manual_set_second_2 = tk.Entry(self.manual_frame, font=FONT_NORMAL, width=10)
 
         self.l_manual_set_second.grid(row=1, column=0, sticky="e", padx=10, pady=5)
         self.e_manual_set_second_1.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
@@ -395,13 +395,13 @@ class MainWindow:
 
         # Row 2: Action buttons
         self.b_manual_set_frame, self.b_manual_set = self._create_bordered_button(
-            manual_frame, text=t("manual_set")
+            self.manual_frame, text=t("manual_set")
         )
         self.b_manual_set_sample_frame, self.b_manual_set_sample = self._create_bordered_button(
-            manual_frame, text=t("sample_images")
+            self.manual_frame, text=t("sample_images")
         )
         self.b_manual_set_save_frame, self.b_manual_set_save = self._create_bordered_button(
-            manual_frame, text=t("save_detection_points")
+            self.manual_frame, text=t("save_detection_points")
         )
 
         self.b_manual_set_frame.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
@@ -409,12 +409,12 @@ class MainWindow:
         self.b_manual_set_save_frame.grid(row=2, column=2, sticky="ew", padx=5, pady=5)
 
         # Row 3: Frame 1 description + array 1 coordinates (4 points)
-        self.l_frame_1_desc = tk.Label(manual_frame, text=t("frame_1_desc"), font=FONT_LABEL)
+        self.l_frame_1_desc = tk.Label(self.manual_frame, text=t("frame_1_desc"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_frame_1_desc)
         self.l_frame_1_desc.grid(row=3, column=0, sticky="w", padx=10, pady=2)
 
         # Container for coordinate label + info button
-        coord_1_container = tk.Frame(manual_frame)
+        coord_1_container = tk.Frame(self.manual_frame)
         self.themeable_frames.append(coord_1_container)
 
         self.l_array_1_coords = tk.Label(coord_1_container, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4)", font=FONT_LABEL)
@@ -431,12 +431,12 @@ class MainWindow:
         coord_1_container.grid(row=3, column=1, columnspan=2, sticky="w", padx=10, pady=2)
 
         # Row 4: Frame 2 description + array 2 coordinates (8 points)
-        self.l_frame_2_desc = tk.Label(manual_frame, text=t("frame_2_desc"), font=FONT_LABEL)
+        self.l_frame_2_desc = tk.Label(self.manual_frame, text=t("frame_2_desc"), font=FONT_LABEL)
         self.themeable_labels.append(self.l_frame_2_desc)
         self.l_frame_2_desc.grid(row=4, column=0, sticky="w", padx=10, pady=2)
 
         # Container for coordinate label + info button
-        coord_2_container = tk.Frame(manual_frame)
+        coord_2_container = tk.Frame(self.manual_frame)
         self.themeable_frames.append(coord_2_container)
 
         self.l_array_2_coords = tk.Label(coord_2_container, text="(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x5, y5), (x6, y6), (x7, y7), (x8, y8)", font=FONT_LABEL)
@@ -925,3 +925,4 @@ class MainWindow:
         self.processing_frame.config(text=t("processing_settings"))
         self.crop_frame.config(text=t("crop_actions"))
         self.process_frame.config(text=t("process_actions"))
+        self.manual_frame.config(text=t("manual_detection"))
