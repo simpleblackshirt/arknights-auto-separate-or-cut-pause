@@ -77,48 +77,27 @@ if %FFMPEG_MISSING%==0 (
 
 REM Download FFmpeg binaries
 echo.
-echo Downloading FFmpeg binaries (this may take a moment, files are ~110MB total)...
+echo Downloading FFmpeg binaries (this may take a moment, ~100MB)...
 echo.
 
-REM Download ffmpeg.exe
-if not exist bin\ffmpeg.exe (
-    echo Downloading ffmpeg.exe...
-    curl -L -o bin\ffmpeg.exe https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip-bin/ffmpeg.exe
-    if errorlevel 1 (
-        echo WARNING: Failed to download ffmpeg.exe from primary URL
-        echo Trying alternative source...
-        curl -L -o bin\ffmpeg.exe https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
-        if errorlevel 1 (
-            echo ERROR: Failed to download FFmpeg
-            echo Please download manually from: https://www.gyan.dev/ffmpeg/builds/
-            echo Extract ffmpeg.exe and ffprobe.exe to the bin\ directory
-            pause
-            exit /b 1
-        )
-    )
-) else (
-    echo ffmpeg.exe already exists, skipping download.
+REM Download and extract FFmpeg from BtbN builds
+echo Downloading FFmpeg zip...
+curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
+if errorlevel 1 (
+    echo ERROR: Failed to download FFmpeg
+    echo Please download manually from: https://github.com/BtbN/FFmpeg-Builds/releases/latest
+    pause
+    exit /b 1
 )
 
-REM Download ffprobe.exe
-if not exist bin\ffprobe.exe (
-    echo Downloading ffprobe.exe...
-    curl -L -o bin\ffprobe.exe https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip-bin/ffprobe.exe
-    if errorlevel 1 (
-        echo WARNING: Failed to download ffprobe.exe from primary URL
-        echo Trying alternative source...
-        curl -L -o bin\ffprobe.exe https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
-        if errorlevel 1 (
-            echo ERROR: Failed to download FFprobe
-            echo Please download manually from: https://www.gyan.dev/ffmpeg/builds/
-            echo Extract ffmpeg.exe and ffprobe.exe to the bin\ directory
-            pause
-            exit /b 1
-        )
-    )
-) else (
-    echo ffprobe.exe already exists, skipping download.
-)
+echo Extracting FFmpeg binaries...
+powershell -Command "Expand-Archive -Path ffmpeg.zip -DestinationPath ffmpeg_temp -Force"
+move ffmpeg_temp\ffmpeg-master-latest-win64-gpl\bin\ffmpeg.exe bin\
+move ffmpeg_temp\ffmpeg-master-latest-win64-gpl\bin\ffprobe.exe bin\
+rmdir /s /q ffmpeg_temp
+del ffmpeg.zip
+
+echo FFmpeg binaries downloaded and extracted successfully.
 
 :skip_ffmpeg_download
 
