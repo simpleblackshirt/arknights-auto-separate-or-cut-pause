@@ -25,7 +25,43 @@ logger = logging.getLogger(__name__)
 path = os.getcwd()
 working_path = path + "\\working_folder\\"
 bin_path = path + "\\bin\\"
+
+# Validate FFmpeg availability before proceeding
+def check_ffmpeg():
+    """Check if FFmpeg is available in bin/ directory or system PATH."""
+    # Check local bin directory
+    ffmpeg_local = os.path.join(bin_path, 'ffmpeg.exe')
+    if os.path.exists(ffmpeg_local):
+        return True
+
+    # Check system PATH
+    import shutil
+    if shutil.which('ffmpeg'):
+        return True
+
+    # FFmpeg not found
+    logger.error("=" * 60)
+    logger.error("FFmpeg not found!")
+    logger.error("=" * 60)
+    logger.error("")
+    logger.error("FFmpeg is required for this application to work.")
+    logger.error("")
+    logger.error("Please run setup.bat to download FFmpeg automatically,")
+    logger.error("or download it manually from:")
+    logger.error("  https://www.gyan.dev/ffmpeg/builds/")
+    logger.error("")
+    logger.error("Extract ffmpeg.exe and ffprobe.exe to the bin\\ directory.")
+    logger.error("=" * 60)
+    return False
+
+# Set up PATH for FFmpeg
 os.environ['PATH'] = bin_path + os.pathsep + os.environ.get('PATH','')
+
+# Check FFmpeg availability early
+if not check_ffmpeg():
+    import sys
+    input("\nPress Enter to exit...")
+    sys.exit(1)
                     
 array_1 = []
 array_2 = []

@@ -67,6 +67,8 @@ dmypy.json
 # Project-specific
 bin/
 working_folder/
+settings.txt
+detection_points.txt
 
 # Logs
 *.log

@@ -1,5 +1,8 @@
+# Python 3.12+ compatibility
 customtkinter>=5.2.0
-opencv-python
-numpy
-pydub
-darkdetect
+opencv-python>=4.8.0
+numpy>=1.24.0
+pydub>=0.25.0
+darkdetect>=0.8.0
+# For building standalone executables
+pyinstaller>=6.0.0
