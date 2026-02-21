@@ -7,18 +7,18 @@ echo Arknights Cut Tool - Windows Setup
 echo ========================================
 echo.
 
-REM Check Python is installed
-python --version >nul 2>&1
+REM Check Python 3.12 is installed
+py -3.12 --version >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Python is required but not found
+    echo ERROR: Python 3.12 is required but not found
     echo Please install Python 3.12 from: https://www.python.org/downloads/
     echo Make sure to check "Add Python to PATH" during installation
     pause
     exit /b 1
 )
 
-echo Checking Python version...
-for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
+echo Using Python 3.12...
+for /f "tokens=2" %%i in ('py -3.12 --version 2^>^&1') do set PYTHON_VERSION=%%i
 echo Found Python %PYTHON_VERSION%
 echo.
 
@@ -28,7 +28,7 @@ if exist venv (
     echo Virtual environment already exists. Removing old one...
     rmdir /s /q venv
 )
-python -m venv venv
+py -3.12 -m venv venv
 if errorlevel 1 (
     echo ERROR: Failed to create virtual environment
     pause
@@ -47,11 +47,11 @@ if errorlevel 1 (
 )
 
 echo Upgrading pip...
-python -m pip install --upgrade pip
+py -3.12 -m pip install --upgrade pip
 echo.
 
 echo Installing Python dependencies...
-pip install -r requirements.txt
+py -3.12 -m pip install -r requirements.txt
 if errorlevel 1 (
     echo ERROR: Failed to install dependencies
     pause
@@ -108,7 +108,8 @@ echo ========================================
 echo.
 echo To run the application:
 echo   1. Activate the virtual environment: venv\Scripts\activate.bat
-echo   2. Run the application: python cut_tool.py
+echo   2. Run the application: py -3.12 cut_tool.py
+echo   OR: python cut_tool.py (when venv is active)
 echo.
 echo.
 pause
